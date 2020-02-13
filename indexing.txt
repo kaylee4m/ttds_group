@@ -1,0 +1,18 @@
+一部分indexing模块，储存了每个term的tf和df，可以用来计算某个query的tfidf或者BM2.5值
+
+输入： 基于小田count_data.py里的读取方法，读取metadata.json.gz文件
+
+读取以后将每一个文章的title与abstract作为一个整体进行处理（可能会给title里出现的term更多的权重）
+
+
+预处理：用nltk的分词（nltk.word_tokenize），去除stopwords
+        不用stemming，用steamming可能会影响一些术语和专业词汇的：text classification>text classi,
+	而且也会影响我们用
+
+储存tf和df的结构：posting_lists=｛term:[df,[{doc_id:tf}]]｝
+
+例如 query里包含convolutional,
+那么postings_lists['convolutional']=[3, [{'0704.0282': 2}, {'0704.0361': 1}, {'0704.1411': 2}]]
+意思是说convolutional这个词在三个文件里出现了（df）,而且这个词在这三个文件中出现的次数分别是2,1,2
+
+输出：用sqlite3将上述结构导出到数据库
