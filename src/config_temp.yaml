@@ -1,0 +1,3 @@
+# modify this to adapt to your own environment
+# change name to config.yaml to have effect
+DATA_DIR: ""
