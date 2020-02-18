@@ -18,5 +18,5 @@ def args_build_index():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg", default='config.yaml', required=False)
-    raise NotImplementedError
+
     return parser.parse_args()
