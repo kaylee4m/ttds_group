@@ -7,9 +7,9 @@ def get_config(args):
         @return: A dict containing configurations
     """
     cfg_file = args.cfg
-    cfg = None
+    with open(cfg_file, 'r') as f:
+        cfg = yaml.safe_load(f)
     return cfg
-    raise NotImplementedError
 
 
 def args_build_index():
