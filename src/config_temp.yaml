@@ -1,3 +1,14 @@
 # modify this to adapt to your own environment
 # change name to config.yaml to have effect
+
+# Source data
 DATA_DIR: ""
+ALL_DATA: "arxiv-metadata-oai-sample.gz"
+DEV_SET: ""
+TRAIN_SET: ""
+VALIDATION_SET: ""
+TEST_SET: ""
+
+# index 
+INDEX_DIR: ""
+INDEX_PREFIX: ""
