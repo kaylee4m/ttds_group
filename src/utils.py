@@ -20,11 +20,6 @@ def args_build_index():
 
     return parser.parse_args()
 
-def get_citation():
-    # ─── USE GOOGLE SCHOLAR TO GET CITATION INFORMATION ─────────────────────────────
-
-
-    pass
 
 
 def get_cat_fullname(cat):
