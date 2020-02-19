@@ -109,7 +109,8 @@ def get_posting_list(term: str, index_dir):
         NotImplementedError: [description]
 
     Returns:
-        [type] -- [description]
+        posting_list: PostingList -- The posting_list for the term.
+                         Return None if not presented in index 
     """
     global cached_posting_list
     key = self.get_term_key(term)
