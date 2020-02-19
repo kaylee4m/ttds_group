@@ -73,6 +73,12 @@ class PostingList:
         raise NotImplementedError
         return PostingList()
 
+    def is_empty(self):
+        """
+            if this posting list has no postings, return True
+        """
+        pass
+
     def __str__(self):
         return ""
 
