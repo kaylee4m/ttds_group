@@ -1,7 +1,6 @@
 import argparse
 import yaml
 
-
 def get_config(args):
     """
         @return: A dict containing configurations
@@ -20,3 +19,17 @@ def args_build_index():
     parser.add_argument("--cfg", default='config.yaml', required=False)
 
     return parser.parse_args()
+
+def get_citation():
+    # ─── USE GOOGLE SCHOLAR TO GET CITATION INFORMATION ─────────────────────────────
+
+
+    pass
+
+
+def get_cat_fullname(cat):
+    """Convert category abbreviation to full name
+    
+    Arguments:
+        cat {[type]} -- [description]
+    """

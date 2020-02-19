@@ -7,6 +7,7 @@ from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from utils import *
+import hashlib
 
 
 class PostingElement:
@@ -21,7 +22,11 @@ class PostingElement:
         raise NotImplementedError
 
     def add_pos(pos):
-        pass
+        """Add one position to positions
+
+        Arguments:
+            pos {int} -- [description]
+        """
 
 
 class PostingList:
@@ -37,6 +42,14 @@ class PostingList:
         raise NotImplementedError
 
     def get_doc_posting(self, article):
+        """If a doc is recorded, return it; if not, create the postingElement for it and return it
+
+        Arguments:
+            article {dict} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         doc_id = article['id']
         if doc_id not in self.doc_ids:
             self.doc_list.append(PostingElement(doc_id))
@@ -63,62 +76,80 @@ class PostingList:
     def __str__(self):
         return ""
 
-    def save_index(self, index_dir):
-        """
-            Save a posting list into memory or one file
-        """
+
+def get_term_key(term):
+    """
+        convert a term into key. Terms with the same key will be saved into the same file.
+        Used to find posting list group in cached_posting_list.
+        See Index Storage and Compression section in report.
+    """
+    return term
+
+
+def get_term_index_file(key, index_dir: str):
+    """
+        Find the index file associated with this key.
+        A file contains many posting lists (each associated with one term)
+    """
+    # TODO load from disk
+    #  decode  with PostingList.decode()
+    # and return group of pls
+    return pl_group
+
+
+def get_posting_list(term: str, index_dir):
+    """        Get a posting list using term as the key
+
+
+    Arguments:
+        term {[type]} -- [description]
+        index_dir {[type]} -- [description]
+
+    Raises:
+        NotImplementedError: [description]
+
+    Returns:
+        [type] -- [description]
+    """
+    global cached_posting_list
+    key = self.get_term_key(term)
+    if key in cached_posting_list:
+        # DONE: load
+        d = cached_posting_list[key]
+        posting_list = d[term]
+    else:
+        pl_group = self.get_term_index_file(key, index_dir)
+        # TODO add to cache
+        # Remember to save **asynchronously** to disk if some cached posting is discarded
+        raise NotImplementedError
+    return posting_list
+
+
+def save_posting_list_group(pl_group, index_dir):
+    """Save a posting list group to disk
+
+    Arguments:
+        pl_group {dict} -- Dictionary of posting lists.
+
+    Raises:
+        NotImplementedError: [description]
+    """
+    raise NotImplementedError
+
+
+def preprocessing(stemmer, content, stop_words, stemmer):
+    cleaned_list = []
+    for i in content:
+        i = i.lower()
+        if i.isalpha() and i not in stop_words:
+            i = stemmer.stem(i)
+            cleaned_list.append(i)
+    return cleaned_list
 
 
 class BuildIndex:
     def __init__(self, args):
         self.cfg = get_config(args)
-
-    def get_term_key(self, term):
-        """
-            convert a term into key. Terms with the same key will be saved into the same file.
-            Used to find posting list group in cached_posting_list.
-            See Index Storage and Compression section in report.
-        """
-        return term
-
-    def save_posting_list_group(self, pl_group):
-        raise NotImplementedError
-
-    def get_term_index_file(self, key, index_dir):
-        """
-            Find the index file associated with this key.
-            A file contains many posting lists (each associated with one term)
-        """
-        # TODO load from disk 
-        #  decode  with PostingList.decode()
-        # and return group of pls
-        return pl_group
-
-    def get_posting_list(self, term):
-        """
-            Get a posting list using term as the key
-        """
-        global cached_posting_list
-        key = self.get_term_key(term)
-        if key in cached_posting_list:
-            # DONE: load
-            d = cached_posting_list[key]
-            posting_list = d[term]
-        else:
-            pl_group = self.get_term_index_file(key, self.cfg['INDEX_DIR'])
-            # TODO add to cache
-            # Remember to save **asynchronously** to disk if some cached posting is discarded
-            raise NotImplementedError
-        return posting_list
-
-    def preprocessing(self, stemmer, content, stop_words, stemmer):
-        cleaned_list = []
-        for i in content:
-            i = i.lower()
-            if i.isalpha() and i not in stop_words:
-                i = stemmer.stem(i)
-                cleaned_list.append(i)
-        return cleaned_list
 
     def Doc(self, id, term_freq):
         return {id: term_freq}
@@ -139,7 +170,7 @@ class BuildIndex:
         content = nltk.word_tokenize(title + abstract)
         cleaned_words = self.preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
-            pl: PostingList = self.get_posting_list(word)
+            pl: PostingList = get_posting_list(word)
             doc_posting: PostingElement = pl.get_doc_posting(article)
             doc_posting.add_pos(pos)
         # TODO: build index for category?
@@ -149,8 +180,7 @@ class BuildIndex:
             To build index using All data
         """
 
-        raise NotImplementedError
-        # Only need to download once, please check this
+        # TODO Only need to download once, please check this
         nltk.download('stopwords')
         stop_words = set(stopwords.words('english'))
         ps = PorterStemmer()
@@ -173,7 +203,7 @@ class BuildIndex:
         # save all the rest in cache
         for k, pl in cached_posting_list.items():
             assert type(pl) == PostingList
-            self.save_posting_list_group(pl)
+            save_posting_list_group(pl, self.cfg['INDEX_DIR'])
 
     def update_index_main(self, args):
         pass
