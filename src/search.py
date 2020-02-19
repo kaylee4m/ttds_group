@@ -36,7 +36,7 @@ class Search:
         Returns:
             result -- a generator of result list
         """
-        result, query_type = self.parse_query(q, query_type)
+        result, query_type = self.parse_query(q)
         raise NotImplementedError
         if query_type == 'r':
             return self.ranked_search(result)
