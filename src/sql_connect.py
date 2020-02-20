@@ -10,17 +10,9 @@ def get_docs(doc_ids: list):
         doc_ids {list} -- [description]
 
     Return:
-        A list of dictionary, the format of which is
-        {
-            author: ... ,
-            time: , # the year in which it is published
-            url:  the url of the paper
-            desc: description(abstract)
-            cited: citation number
-            category: abbreviation list
-        }
+        A list of dictionary, refer to output_format.jpg in src/res for the format 
     """
-    pass
+    return dict()
 
 
 def get_citations(article: dict):

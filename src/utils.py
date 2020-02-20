@@ -45,6 +45,12 @@ def get_cat_fullname(cat):
     Arguments:
         cat {[type]} -- [description]
     """
+    if "cat_abbr_to_full" in globals():
+        global cat_abbr_to_full
+        return cat_abbr_to_full[cat]
+    else:
+        # read from file
+        raise NotImplementedError
 
 
 def get_average_word_count():
@@ -52,10 +58,12 @@ def get_average_word_count():
     """
     raise NotImplementedError
 
+
 def get_doc_numbers():
     """Get the number of documents
     """
     raise NotImplementedError
+
 
 def get_doc_word_count(doc_id):
     """
