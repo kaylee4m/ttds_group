@@ -11,7 +11,7 @@ import nltk
 from pprint import pprint
 from arxiv_indexing import *
 from sql_connect import *
-from typing import List
+from typing import List, Set
 from functools import reduce
 from cachetools import LRUCache
 
@@ -46,17 +46,27 @@ class Search:
         key = q['keyword'] + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
             words = preprocessing(self.stemmer, q['keyword'], self.stopwords)
-            pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
+            ori_pls = [get_posting_list(self.cfg, w, self.cfg['INDEX_DIR'])
+                       for w in words]
             total_docs = get_doc_numbers()
-            df = np.log10(np.array([
-                p.get_doc_freq() for p in pls
-            ]))
+            df = [p.get_doc_freq() for p in ori_pls]
+            pls = [p.get_postings(q['range']) for p in ori_pls]
+            # DONE: Filter categories. pls should be List[List[PostingElement]]
+            # Assume categories are abbreviation
+            if q['category']:
+                cats = [get_cat_tag(c.strip()) for c in q["category"].split(
+                    self.cfg['CAT_SPLIT_SYMB'])]
+                cat_pls = [get_posting_list(self.cfg,
+                                            c, self.cfg['INDEX_DIR']).get_postings(q['range']) for c in cats]
+                cat_pl_set: Set(PostingElement) = reduce(
+                    set.union, [set(p) for p in cat_pls])
+                pls = self.boolean_search(pls, cat_pl_set)
+                # if a term does not appear in a specific category, no need to search among these
+                df = [df[i] for i, p in enumerate(pls) if p]
+                pls = [p[i] for i, p in enumerate(pls) if p]
+            df = np.array(df)
             idf = np.log10((total_docs-df+.5)/(df+.5))
-            # TODO filter out years
-            pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
-            
-            # TODO: Filter categories. pls should be List[List[PostingElement]]
-
+            # Search the rest posting lists
             doc_ids = self.ranked_search(pls, idf)
             results = get_docs(doc_ids)
             # split results into pages
@@ -69,83 +79,21 @@ class Search:
             self.searched_results[key] = split_results
         return self.searched_results[key][q['pageNum']]
 
-    def make_set(self, var_to_be_set):
-        if type(var_to_be_set) is set:
-            return var_to_be_set
-        elif type(var_to_be_set) == dict:
-            return set(var_to_be_set.keys())
-        else:
-            return set(var_to_be_set)
+    def boolean_search(self, candidate: List[List[PostingElement]],
+                       must_in: Set(PostingElement))->List[List[PostingElement]]:
+        """Cast boolean search on candidate. Filter our those not in must_in
+        Arguments:
+            candidate {PostingList} -- [description]
+            must_in {PostingList} --  
 
-    def single_search(self, target):
-        '''
-
-        :param target: single words' dict
-        :return:
-        '''
-        is_inclusive, word = target
-        word = word[0]
-        if word not in self.index:
-            raise KeyError("Target %s must be in the term list." % target)
-        else:
-            return self.index[word]
-            # return self.all_doc_id - set(self.index[word].keys())
-
-    def proximity_search(self, parsed_q, abso=True):
-        '''
-
-        :param parsed_q: contains a tuple of 3, which is distance, the first word, and the second word
-        :return: a dictionary whose format is the same as term dictionary. result={docId:set(postions)}.
-                Here positions means a set of positions of the first word.
-        '''
-        dist, tar1, tar2 = parsed_q
-        docs1 = self.single_search(tar1)
-        docs2 = self.single_search(tar2)
-        assert type(docs1) == type(docs2) == dict
-        result = {}
-        for d, pos_list1 in docs1.items():
-            if d in docs2:
-                pos_list2 = set(docs2[d])
-                for p1 in pos_list1:
-                    for p2 in pos_list2:
-                        if (0 < abs(p2 - p1) <= dist and abso) or (0 < p2 - p1 <= dist and not abso):
-                            result.setdefault(d, set()).add((p1, p2))
-        return result
-
-    def phrase_search(self, tup):
-        '''
-
-        :param s: The phrase. You can also input a single word.
-            If target contains multiple elements, it is a phrase;
-            if it is empty list, it is '' and will return an empty set
-            tup[0] 1 or 0 for NOT: tup[1] is the phrase
-
-        :return: Return the set of docID it resides in
-        '''
-        is_include, word = tup
-        if len(word) == 1:
-            result = self.single_search(tup)
-        elif len(word) > 1:
-            first_and_second = self.proximity_search(
-                (1, (1, [word[0]]), (1, [word[1]])), abso=False)
-            result = first_and_second
-        else:
-            result = {}
-        if is_include:
-            return self.make_set(result)
-        else:
-            return self.all_doc_id - self.make_set(result)
-
-    def boolean_search(self, parsed_q):
-        is_and, tar1, tar2 = parsed_q
-        docs1 = self.make_set(self.phrase_search(tar1))
-        docs2 = self.make_set(self.phrase_search(tar2))
-        if is_and:
-            result = docs1 & docs2
-        else:
-            result = docs1 | docs2
-        result = sorted(list(result))
-        return result
+        Returns:
+            List[List[PostingElement]] -- [description]
+        """
+        docs_must_in = set([d.doc_id for d in must_in])
+        result = []
+        for pl in candidate:
+            result.append([ele for ele in pl if ele.doc_id in docs_must_in])
+        return candidate
 
     def get_BM25_score(self, posting_lists:  List[List[PostingElement]],  doc_id_to_idx, idf):
         num_terms = len(posting_lists)
@@ -154,10 +102,9 @@ class Search:
         doc_len = np.zeros(num_docs)
         for doc_id, idx in doc_id_to_idx.items():
             doc_len[idx] = get_doc_word_count(
-                get_doc_word_count[doc_id])/avg_len
+                get_doc_word_count(doc_id))/avg_len
         doc_len = np.array(doc_len)
         k = self.cfg['BM25_COEFF']
-        # TO be checked
         tf_matrix = np.zeros([num_docs, num_terms])
         for j, p in enumerate(posting_lists):
             for d in p:
