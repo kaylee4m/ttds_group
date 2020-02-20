@@ -15,18 +15,21 @@ class PostingElement:
         Data structure for one element in posting list
     """
 
-    def __init__(self, doc_id, author=False):
+    def __init__(self, doc_id,cate, author=False):
         self.doc_id = doc_id
+        self.cate = cate
         self.author = author
         self.positions = []
-        raise NotImplementedError
 
-    def add_pos(pos):
+    def add_pos(self,pos):
+
         """Add one position to positions
 
         Arguments:
             pos {int} -- [description]
         """
+
+        self.positions.append(pos)
 
 
 class PostingList:
@@ -39,7 +42,7 @@ class PostingList:
         # TODO: TO be decided whether we use a list or a binary tree
         self.doc_ids = {}  # doc_id: idx in list
         self.doc_list = []
-        raise NotImplementedError
+        #raise NotImplementedError
 
     def get_doc_posting(self, article):
         """If a doc is recorded, return it; if not, create the postingElement for it and return it
@@ -51,8 +54,9 @@ class PostingList:
             [type] -- [description]
         """
         doc_id = article['id']
+        cate =  article['categories']
         if doc_id not in self.doc_ids:
-            self.doc_list.append(PostingElement(doc_id))
+            self.doc_list.append(PostingElement(doc_id,cate))
             self.doc_ids[doc_id] = len(self.doc_list)-1
         return self.doc_list[self.doc_ids[doc_id]]
 
@@ -131,13 +135,13 @@ def get_posting_list(term: str, index_dir):
                          Return None if not presented in index 
     """
     global cached_posting_list
-    key = self.get_term_key(term)
+    key = get_term_key(term)
     if key in cached_posting_list:
         # DONE: load
         d = cached_posting_list[key]
         posting_list = d[term]
     else:
-        pl_group = self.get_term_index_file(key, index_dir)
+        pl_group = get_term_index_file(key, index_dir)
         # TODO add to cache
         # Remember to save **asynchronously** to disk if some cached posting is discarded
         raise NotImplementedError
@@ -156,7 +160,7 @@ def save_posting_list_group(pl_group, index_dir):
     raise NotImplementedError
 
 
-def preprocessing(stemmer, content, stop_words, stemmer):
+def preprocessing(stemmer, content, stop_words):
     cleaned_list = []
     for i in content:
         i = i.lower()
@@ -189,7 +193,7 @@ class BuildIndex:
         content = nltk.word_tokenize(title + abstract)
         cleaned_words = self.preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
-            pl: PostingList = get_posting_list(word)
+            pl: PostingList = get_posting_list(word,self.cfg['INDEX_DIR'])
             doc_posting: PostingElement = pl.get_doc_posting(article)
             doc_posting.add_pos(pos)
         # TODO: build index for category?
