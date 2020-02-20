@@ -8,6 +8,7 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from utils import *
 import hashlib
+from cachetools import LFUCache
 
 
 class PostingElement:
@@ -15,13 +16,16 @@ class PostingElement:
         Data structure for one element in posting list
     """
 
+<<<<<<< HEAD
     def __init__(self, doc_id, author=False):
+=======
+    def __init__(self, doc_id, cate, author=False):
+>>>>>>> d5f6d495ef1925c44a1fd0ffb613ad139f0b3cc3
         self.doc_id = doc_id
         self.author = author
         self.positions = []
 
-    def add_pos(self,pos):
-
+    def add_pos(self, pos):
         """Add one position to positions
 
         Arguments:
@@ -53,9 +57,20 @@ class PostingList:
             [type] -- [description]
         """
         doc_id = article['id']
+<<<<<<< HEAD
         if doc_id not in self.doc_ids:
             self.doc_list.append(PostingElement(doc_id))
+=======
+        cate = article['categories']
+        if doc_id not in self.doc_ids:
+            self.doc_list.append(PostingElement(doc_id, cate))
+>>>>>>> d5f6d495ef1925c44a1fd0ffb613ad139f0b3cc3
             self.doc_ids[doc_id] = len(self.doc_list)-1
+        return self.doc_list[self.doc_ids[doc_id]]
+
+    def get_posting_by_docid(self, doc_id):
+        if doc_id not in self.doc_ids:
+            return None
         return self.doc_list[self.doc_ids[doc_id]]
 
     def encode(self):
@@ -75,11 +90,20 @@ class PostingList:
         raise NotImplementedError
         return PostingList()
 
-    def is_empty(self):
+    def get_doc_ids(self):
         """
-            if this posting list has no postings, return True
+            Return all doc ids in this pl
         """
-        pass
+        raise NotImplementedError
+        return []
+
+    def get_postings(self, year_range: str=""):
+        """
+            Return all postings
+            if year range is specified as "2019-2020" only return those published in these years
+        """
+        raise NotImplementedError
+        return []
 
     def __str__(self):
         return ""
@@ -172,8 +196,8 @@ def preprocessing(stemmer, content, stop_words):
 
 
 class BuildIndex:
-    def __init__(self, args):
-        self.cfg = get_config(args)
+    def __init__(self, cfg):
+        self.cfg = cfg
 
     def Doc(self, id, term_freq):
         return {id: term_freq}
@@ -189,10 +213,13 @@ class BuildIndex:
         authors = article['authors']
 
         # TODO: combine title, author and content
+        # use get_doc_year to get year from doc id,
+        # before add year into index, make it special by using get_sp_term. "08" -> "#08"
+        # use get_cat_tag to get special term for category
         content = nltk.word_tokenize(title + abstract)
         cleaned_words = preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
-            pl: PostingList = get_posting_list(word,self.cfg['INDEX_DIR'])
+            pl: PostingList = get_posting_list(word, self.cfg['INDEX_DIR'])
             doc_posting: PostingElement = pl.get_doc_posting(article)
             doc_posting.add_pos(pos)
         # TODO: build index for category?
@@ -233,7 +260,9 @@ class BuildIndex:
 
 if __name__ == "__main__":
     global cached_posting_list
-    cached_posting_list = {}  # dict of group of posting lists
     args = args_build_index()
+    cfg = get_config(args)
+    # dict of group of posting lists
+    cached_posting_list = LFUCache(cfg['INDEX_CACHE_SIZE'])
     tool = BuildIndex(args)
     tool.build_index_main()
