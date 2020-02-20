@@ -77,6 +77,12 @@ class PostingList:
         raise NotImplementedError
         return PostingList()
 
+    def is_empty(self):
+        """
+            if this posting list has no postings, return True
+        """
+        pass
+
     def __str__(self):
         return ""
 
@@ -113,7 +119,8 @@ def get_posting_list(term: str, index_dir):
         NotImplementedError: [description]
 
     Returns:
-        [type] -- [description]
+        posting_list: PostingList -- The posting_list for the term.
+                         Return None if not presented in index 
     """
     global cached_posting_list
     key = get_term_key(term)

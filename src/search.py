@@ -2,7 +2,8 @@
 Core search module
 TODO Reimplement all methods for large-scale document collection,  
 expect at least 10k entries for a keyword
-"""import numpy as np
+"""
+import numpy as np
 import pickle
 from util import term_to_index
 import re
@@ -15,19 +16,21 @@ from sql_connect import *
 class Search:
     def __init__(self, cfg):
         self.cfg = cfg
+        self.stopwords = set(nltk.corpus.stopwords.words('english'))
         self.index = []
-        self.all_doc_id = set(self.index['#HEADLINE'].keys())
-        self.all_doc_list = list(self.index['#HEADLINE'].keys())
-        self.all_doc_dict = {docID: i for i,
-                             docID in enumerate(self.all_doc_list)}
-        self.stopwords = set()
         self.stemmer = nltk.stem.PorterStemmer()
+        self.cat_dict = {}
+        with open(cfg['CAT_ABBR_DICT'], 'r') as f:
+            for line in f.readlines():
+                abbr, full = line.strip().split()
+                self.cat_dict[abbr] = full
+        self.searched_results = {}  # cached dictionary
 
     def search(self, q, query_type=None,):
         """Search by query
 
         Arguments:
-            q {str} -- json to be parsed
+            :param q:  query. dictionary. keys are "keyword", "pageNum", "range"(years), "category"
 
         Keyword Arguments:
             query_type {[type]} -- [description] (default: {None})
@@ -36,58 +39,13 @@ class Search:
         Returns:
             result -- a generator of result list
         """
-        result, query_type = self.parse_query(q)
+        if q['keyword'] in self.searched_results:
+            return self.searched_results[q['keyword']][q['pageNum']]
+        words = preprocessing(self.stemmer, q['keyword'], self.stopwords, None)
+        pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
+        pls = [p for p in pls if not p.is_empty()]
+
         raise NotImplementedError
-        if query_type == 'r':
-            return self.ranked_search(result)
-        elif query_type == 'b':
-            return self.boolean_search(result)
-        elif query_type == 'p':
-            return self.proximity_search(result, True)
-
-    def parse_query(self, q, query_type=None):
-        '''
-
-        :param q:  query. dictionary. keys are "keyword", "pageNum", "range"(years), "category"
-        :param query_type: If we know in advance the type, we dont have to infer its type
-        :return:
-        '''
-
-        def parse_target(s):
-            # May contain NOT
-            '''
-            :param s:
-            :return: tuple; [0] is 0 or 1, 0 for NOT; [1] is a list of preprocessed words.
-            '''
-            assert type(s) == str
-            s = s.strip()
-            if s[:3] == 'NOT':
-                negation = 0
-                s = s[3:]
-            else:
-                negation = 1
-            words = [term_to_index(
-                {}, w, 0, 0, self.stopwords, self.stemmer) for w in s.split()]
-            words = [w for w in words if w]
-            return negation, words
-
-        if query_type == 'r':
-            return [parse_target(s) for s in q.split()], query_type
-        else:
-            if q[0] == '#':
-                result = re.split(r"[#(,)]", q)
-                return (int(result[1]), parse_target(result[2]), parse_target(result[3])), 'p'
-            else:  # boolean
-                if ' AND ' in q:
-                    tar1, tar2 = [parse_target(s) for s in q.split(' AND ')]
-                else:
-                    if ' OR ' in q:
-                        tar1, tar2 = [parse_target(s) for s in q.split(' OR ')]
-                    else:
-                        tar1 = parse_target(q)
-                        tar2 = parse_target('')
-                is_and = 'AND' in q
-                return (is_and, tar1, tar2), 'b'
 
     def make_set(self, var_to_be_set):
         if type(var_to_be_set) is set:
@@ -167,10 +125,10 @@ class Search:
         result = sorted(list(result))
         return result
 
-    def ranked_search(self, parsed_q, method=''):
+    def ranked_search(self, posting_lists: list, method=''):
         '''
 
-        :param parsed_q:
+        :param posting_lists:
         :return: tuple of (score, doc)
         '''
         parsed_q = [w[1][0] for w in parsed_q if w[1]]
@@ -190,3 +148,7 @@ class Search:
         sorted_doc_score = doc_score[order]
         docIDs = np.array(self.all_doc_list)[order]
         return docIDs.tolist(), sorted_doc_score
+
+
+if __name__ == "__main__":
+    pass

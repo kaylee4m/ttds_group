@@ -12,3 +12,4 @@ TEST_SET: ""
 # index 
 INDEX_DIR: ""
 INDEX_PREFIX: ""
+CAT_ABBR_DICT: "res/cat_abbr_full.txt"
