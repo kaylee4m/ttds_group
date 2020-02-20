@@ -15,12 +15,7 @@ class PostingElement:
     """
         Data structure for one element in posting list
     """
-
-<<<<<<< HEAD
     def __init__(self, doc_id, author=False):
-=======
-    def __init__(self, doc_id, cate, author=False):
->>>>>>> d5f6d495ef1925c44a1fd0ffb613ad139f0b3cc3
         self.doc_id = doc_id
         self.author = author
         self.positions = []
@@ -57,14 +52,8 @@ class PostingList:
             [type] -- [description]
         """
         doc_id = article['id']
-<<<<<<< HEAD
         if doc_id not in self.doc_ids:
             self.doc_list.append(PostingElement(doc_id))
-=======
-        cate = article['categories']
-        if doc_id not in self.doc_ids:
-            self.doc_list.append(PostingElement(doc_id, cate))
->>>>>>> d5f6d495ef1925c44a1fd0ffb613ad139f0b3cc3
             self.doc_ids[doc_id] = len(self.doc_list)-1
         return self.doc_list[self.doc_ids[doc_id]]
 
@@ -94,21 +83,30 @@ class PostingList:
         """
             Return all doc ids in this pl
         """
-        raise NotImplementedError
-        return []
+        id_list = []
+        for element in self.doc_list:
+            id_list.append(element.doc_id)
+        return id_list
 
     def get_postings(self, year_range: str=""):
         """
             Return all postings
             if year range is specified as "2019-2020" only return those published in these years
         """
-        raise NotImplementedError
-        return []
+        if len(year_range) == 0:
+            return self.doc_list
+        else:
+            filtered_posting = []
+            condition = [ i for i in range(int(year_range[2:4]),int(year_range[7:]))]
+            id_list = self.get_doc_ids()
+            for id in id_list:
+                if int(id[:2]) in condition:
+                    filtered_posting.append(id)
+            return id_list
+
 
     def __str__(self):
         return ""
-
-def get_doc_word_count()
 
 
 def get_term_key(term):
