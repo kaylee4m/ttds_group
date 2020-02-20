@@ -13,6 +13,7 @@ from arxiv_indexing import *
 from sql_connect import *
 from typing import List
 from functools import reduce
+from cachetools import LRUCache
 
 
 class Search:
@@ -26,7 +27,8 @@ class Search:
             for line in f.readlines():
                 abbr, full = line.strip().split()
                 self.cat_dict[abbr] = full
-        self.searched_results = {}  # cached dictionary
+        self.searched_results = LRUCache(
+            self.cfg['SEARCH_CACHE_SIZE'])  # cached dictionary
 
     def search(self, q, query_type=None,):
         """Search by query
@@ -41,15 +43,24 @@ class Search:
         Returns:
             result -- a generator of result list
         """
-        if q['keyword'] in self.searched_results:
-            return self.searched_results[q['keyword']][q['pageNum']]
-        words = preprocessing(self.stemmer, q['keyword'], self.stopwords, None)
-        pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
-        pls = [p for p in pls if not p.is_empty()]
-        # filter out years and category
-        doc_ids = self.ranked_search(pls)
-        results = get_docs(doc_ids)
-        return results
+        key = q['keyword'] + str(q['range']) + str(q['category'])
+        if key not in self.searched_results:
+            words = preprocessing(self.stemmer, q['keyword'], self.stopwords)
+            # TODO filter out years
+            pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
+            # TODO: Filter categories. pls should be List[List[PostingElement]]
+
+            doc_ids = self.ranked_search(pls)
+            results = get_docs(doc_ids)
+            # split results into pages
+            i = 0
+            split_results = []
+            while i < len(results):
+                end = min(i+self.cfg['SEARCH_RESULTS_PER_PAGE'], len(results))
+                split_results.append(results[i:end])
+                i += self.cfg['SEARCH_RESULTS_PER_PAGE']
+            self.searched_results[key] = split_results
+        return self.searched_results[key][q['pageNum']]
 
     def make_set(self, var_to_be_set):
         if type(var_to_be_set) is set:
@@ -129,14 +140,14 @@ class Search:
         result = sorted(list(result))
         return result
 
-    def get_BM25_score(self, posting_lists: List[PostingList],  doc_id_to_idx):
+    def get_BM25_score(self, posting_lists:  List[List[PostingElement]],  doc_id_to_idx):
         tf_matrix = np.zeros([len(doc_id_to_idx), len(posting_lists)])
         for p in posting_lists:
             for d in posting_lists.get_doc_ids():
                 pass
         return np.array([])
 
-    def ranked_search(self, posting_lists: List[PostingList], method='BM25'):
+    def ranked_search(self, posting_lists: List[List[PostingElement]], method='BM25'):
         '''
 
         :param posting_lists:
@@ -145,8 +156,8 @@ class Search:
         # get all doc ids from postings
         # get scores for each document
         # sort
-        doc_ids = [set(p.get_doc_ids()) for p in posting_lists]
-        all_doc_ids = list(reduce(set.union, doc_ids))
+        all_doc_ids = sorted(
+            list(set([d.doc_id for d in p for p in posting_lists])))
         doc_id_to_idx = {doc_id: i for i, doc_id in enumerate(all_doc_ids)}
         if method == 'BM25':
             doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx)
