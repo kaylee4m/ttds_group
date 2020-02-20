@@ -45,3 +45,13 @@ def get_cat_fullname(cat):
     Arguments:
         cat {[type]} -- [description]
     """
+
+
+def get_doc_word_count(doc_id):
+    global doc_word_count
+    if 'doc_word_count' in globals():
+        return doc_word_count[doc_id]
+    else:
+        # read from disk
+
+        raise NotImplementedError
