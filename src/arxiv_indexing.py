@@ -22,6 +22,11 @@ class PostingElement:
         self.author = author
         self.positions = []
 
+    def get_term_freq():
+        """Term freq of the specific term in this document
+        """
+        return len(self.positions)
+
     def add_pos(self, pos):
         """Add one position to positions
 
@@ -96,6 +101,12 @@ class PostingList:
         """
         raise NotImplementedError
         return []
+
+    def get_doc_freq(self):
+        """Get document frequency of this term
+        """
+        raise NotImplementedError
+        return 0
 
     def __str__(self):
         return ""
