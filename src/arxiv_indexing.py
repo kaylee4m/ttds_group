@@ -15,6 +15,7 @@ class PostingElement:
     """
         Data structure for one element in posting list
     """
+
     def __init__(self, doc_id, author=False):
         self.doc_id = doc_id
         self.author = author
@@ -88,9 +89,7 @@ class PostingList:
         """
             Return all doc ids in this pl
         """
-        id_list = []
-        for element in self.doc_list:
-            id_list.append(element.doc_id)
+        id_list = [element.doc_id for element in self.doc_list]
         return id_list
 
     def get_postings(self, year_range: str=""):
@@ -101,14 +100,12 @@ class PostingList:
         if len(year_range) == 0:
             return self.doc_list
         else:
-            filtered_posting = []
-            condition = [i for i in range(int(year_range[2:4]),int(year_range[7:]))]
+            condition = [i for i in range(
+                int(year_range[2:4]), int(year_range[7:]))]
 
-            for element in self.doc_list:
-                if int(element.doc_id[:2]) in condition:
-                    filtered_posting.append(element)
+            filtered_posting = [element for element in self.doc_list if int(
+                element.doc_id[:2]) in condition]
             return filtered_posting
-
 
     def get_doc_freq(self):
         """Get document frequency of this term
@@ -142,7 +139,7 @@ def get_term_index_file(key, index_dir: str):
     # and return group of pls
     with open(index_dir+str(key), 'r') as dictfile:
         js = dictfile.read()
-        pl_object = json.loads(js)#load posting list object using json
+        pl_object = json.loads(js)  # load posting list object using json
     pl_group = pl_object.decode()
     return pl_group
 
@@ -177,7 +174,7 @@ def get_posting_list(term: str, index_dir) -> PostingList:
     return posting_list
 
 
-def save_posting_list_group(key,pl_group, index_dir):
+def save_posting_list_group(key, pl_group, index_dir):
     """Save a posting list group to disk
 
     Arguments:
@@ -190,8 +187,6 @@ def save_posting_list_group(key,pl_group, index_dir):
     file = open(index_dir+"/"+str(key), 'w')
     file.write(saved_group)
     file.close()
-
-
 
 
 def preprocessing(stemmer, content, stop_words):
@@ -261,7 +256,7 @@ class BuildIndex:
         # save all the rest in cache
         for k, pl in cached_posting_list.items():
             assert type(pl) == PostingList
-            save_posting_list_group(k,pl, self.cfg['INDEX_DIR'])
+            save_posting_list_group(k, pl, self.cfg['INDEX_DIR'])
 
     def update_index_main(self, args):
         pass
