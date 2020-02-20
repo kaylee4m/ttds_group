@@ -11,6 +11,8 @@ import nltk
 from pprint import pprint
 from arxiv_indexing import *
 from sql_connect import *
+from typing import List
+from functools import reduce
 
 
 class Search:
@@ -44,8 +46,10 @@ class Search:
         words = preprocessing(self.stemmer, q['keyword'], self.stopwords, None)
         pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
         pls = [p for p in pls if not p.is_empty()]
-
-        raise NotImplementedError
+        # filter out years and category
+        doc_ids = self.ranked_search(pls)
+        results = get_docs(doc_ids)
+        return results
 
     def make_set(self, var_to_be_set):
         if type(var_to_be_set) is set:
@@ -125,29 +129,45 @@ class Search:
         result = sorted(list(result))
         return result
 
-    def ranked_search(self, posting_lists: list, method=''):
+    def get_BM25_score(self, posting_lists: List[PostingList],  doc_id_to_idx):
+        tf_matrix = np.zeros([len(doc_id_to_idx), len(posting_lists)])
+        for p in posting_lists:
+            for d in posting_lists.get_doc_ids():
+                pass
+        return np.array([])
+
+    def ranked_search(self, posting_lists: List[PostingList], method='BM25'):
         '''
 
         :param posting_lists:
         :return: tuple of (score, doc)
         '''
-        parsed_q = [w[1][0] for w in parsed_q if w[1]]
-        tf_matrix = np.zeros([len(self.all_doc_id), len(parsed_q)])
-        for i, t in enumerate(parsed_q):
-            for d in self.index[t]:
-                tf_matrix[self.all_doc_dict[d], i] = len(self.index[t][d])
-        df = np.array([len(self.index[t]) for t in parsed_q])
-        idf = np.log10(len(self.all_doc_dict) / df)
-        not_weight = tf_matrix == 0
-        tf_matrix[not_weight] = 1e-10
-        log_tf = np.log10(tf_matrix)
-        log_tf[not_weight] = -1
-        w = (1 + log_tf) * idf
-        doc_score = w.sum(axis=1)
-        order = np.argsort(doc_score,)[::-1]
-        sorted_doc_score = doc_score[order]
-        docIDs = np.array(self.all_doc_list)[order]
-        return docIDs.tolist(), sorted_doc_score
+        # get all doc ids from postings
+        # get scores for each document
+        # sort
+        doc_ids = [set(p.get_doc_ids()) for p in posting_lists]
+        all_doc_ids = list(reduce(set.union, doc_ids))
+        doc_id_to_idx = {doc_id: i for i, doc_id in enumerate(all_doc_ids)}
+        if method == 'BM25':
+            doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx)
+        else:
+            doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx)
+
+        # for i, t in enumerate(parsed_q):
+        #     for d in self.index[t]:
+        #         tf_matrix[self.all_doc_dict[d], i] = len(self.index[t][d])
+        # df = np.array([len(self.index[t]) for t in parsed_q])
+        # idf = np.log10(len(self.all_doc_dict) / df)
+        # not_weight = tf_matrix == 0
+        # tf_matrix[not_weight] = 1e-10
+        # log_tf = np.log10(tf_matrix)
+        # log_tf[not_weight] = -1
+        # w = (1 + log_tf) * idf
+        # doc_score = w.sum(axis=1)
+        keep = min(len(all_doc_ids), self.cfg["SEARCH_RESULTS_KEEP"])
+        order = np.argsort(doc_score)[::-1][:keep]
+
+        return order.tolist()
 
 
 if __name__ == "__main__":

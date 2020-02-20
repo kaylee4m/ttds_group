@@ -13,3 +13,6 @@ TEST_SET: ""
 INDEX_DIR: ""
 INDEX_PREFIX: ""
 CAT_ABBR_DICT: "res/cat_abbr_full.txt"
+
+# search
+SEARCH_RESULTS_KEEP: 500

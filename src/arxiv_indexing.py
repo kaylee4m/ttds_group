@@ -79,6 +79,18 @@ class PostingList:
         """
         pass
 
+    def get_doc_ids(self):
+        """
+            Return all doc ids in this pl
+        """
+        return []
+
+    def get_postings(self):
+        """
+            Return all postings
+        """
+        return []
+
     def __str__(self):
         return ""
 
