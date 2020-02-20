@@ -97,12 +97,12 @@ class PostingList:
             return self.doc_list
         else:
             filtered_posting = []
-            condition = [ i for i in range(int(year_range[2:4]),int(year_range[7:]))]
-            id_list = self.get_doc_ids()
-            for id in id_list:
-                if int(id[:2]) in condition:
-                    filtered_posting.append(id)
-            return id_list
+            condition = [i for i in range(int(year_range[2:4]),int(year_range[7:]))]
+
+            for element in self.doc_list:
+                if int(element.doc_id[:2]) in condition:
+                    filtered_posting.append(element)
+            return filtered_posting
 
 
     def __str__(self):
