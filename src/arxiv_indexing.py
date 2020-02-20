@@ -15,10 +15,8 @@ class PostingElement:
     """
         Data structure for one element in posting list
     """
-
-    def __init__(self, doc_id, cate, author=False):
+    def __init__(self, doc_id, author=False):
         self.doc_id = doc_id
-        self.cate = cate
         self.author = author
         self.positions = []
 
@@ -59,9 +57,8 @@ class PostingList:
             [type] -- [description]
         """
         doc_id = article['id']
-        cate = article['categories']
         if doc_id not in self.doc_ids:
-            self.doc_list.append(PostingElement(doc_id, cate))
+            self.doc_list.append(PostingElement(doc_id))
             self.doc_ids[doc_id] = len(self.doc_list)-1
         return self.doc_list[self.doc_ids[doc_id]]
 
@@ -91,16 +88,27 @@ class PostingList:
         """
             Return all doc ids in this pl
         """
-        raise NotImplementedError
-        return []
+        id_list = []
+        for element in self.doc_list:
+            id_list.append(element.doc_id)
+        return id_list
 
     def get_postings(self, year_range: str=""):
         """
             Return all postings
             if year range is specified as "2019-2020" only return those published in these years
         """
-        raise NotImplementedError
-        return []
+        if len(year_range) == 0:
+            return self.doc_list
+        else:
+            filtered_posting = []
+            condition = [i for i in range(int(year_range[2:4]),int(year_range[7:]))]
+
+            for element in self.doc_list:
+                if int(element.doc_id[:2]) in condition:
+                    filtered_posting.append(element)
+            return filtered_posting
+
 
     def get_doc_freq(self):
         """Get document frequency of this term
@@ -118,7 +126,10 @@ def get_term_key(term):
         Used to find posting list group in cached_posting_list.
         See Index Storage and Compression section in report.
     """
-    return term
+    obj = hashlib.md5()
+    obj.update(term.encode("utf-8"))
+    key = int(obj.hexdigest(), 16) % (10 ** 5)
+    return key
 
 
 def get_term_index_file(key, index_dir: str):
@@ -129,6 +140,10 @@ def get_term_index_file(key, index_dir: str):
     # TODO load from disk
     #  decode  with PostingList.decode()
     # and return group of pls
+    with open(index_dir+str(key), 'r') as dictfile:
+        js = dictfile.read()
+        pl_object = json.loads(js)#load posting list object using json
+    pl_group = pl_object.decode()
     return pl_group
 
 
@@ -156,12 +171,13 @@ def get_posting_list(term: str, index_dir) -> PostingList:
     else:
         pl_group = get_term_index_file(key, index_dir)
         # TODO add to cache
+        cached_posting_list[key] = pl_group
         # Remember to save **asynchronously** to disk if some cached posting is discarded
-        raise NotImplementedError
+        posting_list = pl_group[term]
     return posting_list
 
 
-def save_posting_list_group(pl_group, index_dir):
+def save_posting_list_group(key,pl_group, index_dir):
     """Save a posting list group to disk
 
     Arguments:
@@ -170,7 +186,12 @@ def save_posting_list_group(pl_group, index_dir):
     Raises:
         NotImplementedError: [description]
     """
-    raise NotImplementedError
+    saved_group = json.dumps(pl_group)
+    file = open(index_dir+"/"+str(key), 'w')
+    file.write(saved_group)
+    file.close()
+
+
 
 
 def preprocessing(stemmer, content, stop_words):
@@ -194,8 +215,6 @@ class BuildIndex:
         """
             Process one article
         """
-
-        raise NotImplementedError
         doc_id = article['id']
         title = article['title']
         categories = article['categories']
@@ -242,7 +261,7 @@ class BuildIndex:
         # save all the rest in cache
         for k, pl in cached_posting_list.items():
             assert type(pl) == PostingList
-            save_posting_list_group(pl, self.cfg['INDEX_DIR'])
+            save_posting_list_group(k,pl, self.cfg['INDEX_DIR'])
 
     def update_index_main(self, args):
         pass
