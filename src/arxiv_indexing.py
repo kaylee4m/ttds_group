@@ -9,6 +9,7 @@ from nltk.stem import PorterStemmer
 from utils import *
 import hashlib
 from cachetools import LFUCache
+from typing import List
 
 
 class PostingElement:
@@ -16,7 +17,8 @@ class PostingElement:
         Data structure for one element in posting list
     """
 
-    def __init__(self, doc_id, author=False):
+    def __init__(self, par, doc_id, author=False):
+        self.parent = par
         self.doc_id = doc_id
         self.author = author
         self.positions = []
@@ -35,6 +37,9 @@ class PostingElement:
 
         self.positions.append(pos)
 
+    def __hash__(self):
+        return hash(self.parent.term+self.doc_id)
+
 
 class PostingList:
     """
@@ -48,7 +53,7 @@ class PostingList:
         self.doc_list = []
         #raise NotImplementedError
 
-    def get_doc_posting(self, article):
+    def get_doc_posting(self, article, authors):
         """If a doc is recorded, return it; if not, create the postingElement for it and return it
 
         Arguments:
@@ -59,7 +64,10 @@ class PostingList:
         """
         doc_id = article['id']
         if doc_id not in self.doc_ids:
-            self.doc_list.append(PostingElement(doc_id))
+            is_author = self.term in authors
+            self.doc_list.append(PostingElement(
+                self, doc_id,
+                author=is_author))
             self.doc_ids[doc_id] = len(self.doc_list)-1
         return self.doc_list[self.doc_ids[doc_id]]
 
@@ -92,7 +100,7 @@ class PostingList:
         id_list = [element.doc_id for element in self.doc_list]
         return id_list
 
-    def get_postings(self, year_range: str=""):
+    def get_postings(self, year_range: str="") -> List[PostingElement]:
         """
             Return all postings
             if year range is specified as "2019-2020" only return those published in these years
@@ -117,7 +125,7 @@ class PostingList:
         return ""
 
 
-def get_term_key(term):
+def get_term_key(cfg, term):
     """
         convert a term into key. Terms with the same key will be saved into the same file.
         Used to find posting list group in cached_posting_list.
@@ -125,7 +133,7 @@ def get_term_key(term):
     """
     obj = hashlib.md5()
     obj.update(term.encode("utf-8"))
-    key = int(obj.hexdigest(), 16) % (10 ** 5)
+    key = int(obj.hexdigest(), 16) % cfg['NUM_INDEX_FILES']
     return key
 
 
@@ -144,7 +152,7 @@ def get_term_index_file(key, index_dir: str):
     return pl_group
 
 
-def get_posting_list(term: str, index_dir) -> PostingList:
+def get_posting_list(cfg, term: str, index_dir) -> PostingList:
     """        Get a posting list using term as the key
 
 
@@ -160,7 +168,7 @@ def get_posting_list(term: str, index_dir) -> PostingList:
                          Return None if not presented in index 
     """
     global cached_posting_list
-    key = get_term_key(term)
+    key = get_term_key(cfg, term)
     if key in cached_posting_list:
         # DONE: load
         d = cached_posting_list[key]
@@ -214,7 +222,8 @@ class BuildIndex:
         title = article['title']
         categories = article['categories']
         abstract = article['abstract']
-        authors = article['authors']
+        authors = preprocessing(stemmer, " ".join(
+            article['authors']), stop_words)
 
         # TODO: combine title, author and content
         # use get_doc_year to get year from doc id,
@@ -223,10 +232,14 @@ class BuildIndex:
         content = nltk.word_tokenize(title + abstract)
         cleaned_words = preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
-            pl: PostingList = get_posting_list(word, self.cfg['INDEX_DIR'])
+            pl: PostingList = get_posting_list(
+                self.cfg, word, self.cfg['INDEX_DIR'])
             doc_posting: PostingElement = pl.get_doc_posting(article)
             doc_posting.add_pos(pos)
         # TODO: build index for category?
+        # Note: Use both large and small category as index. Eg. a paper might be categorized as cs.AI
+        # we need to build 2 indices: #CS and #CS.AI
+        raise NotImplementedError
 
     def build_index(self):
         """
