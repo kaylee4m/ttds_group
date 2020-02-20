@@ -47,7 +47,25 @@ def get_cat_fullname(cat):
     """
 
 
+def get_average_word_count():
+    """Get average number of words in documents
+    """
+    raise NotImplementedError
+
+def get_doc_numbers():
+    """Get the number of documents
+    """
+    raise NotImplementedError
+
 def get_doc_word_count(doc_id):
+    """
+
+    Raises:
+        NotImplementedError: [description]
+
+    Returns:
+        [type] -- [description]
+    """
     global doc_word_count
     if 'doc_word_count' in globals():
         return doc_word_count[doc_id]

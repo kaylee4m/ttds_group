@@ -46,11 +46,18 @@ class Search:
         key = q['keyword'] + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
             words = preprocessing(self.stemmer, q['keyword'], self.stopwords)
+            pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
+            total_docs = get_doc_numbers()
+            df = np.log10(np.array([
+                p.get_doc_freq() for p in pls
+            ]))
+            idf = np.log10((total_docs-df+.5)/(df+.5))
             # TODO filter out years
             pls = [get_posting_list(w, self.cfg['INDEX_DIR']) for w in words]
+            
             # TODO: Filter categories. pls should be List[List[PostingElement]]
 
-            doc_ids = self.ranked_search(pls)
+            doc_ids = self.ranked_search(pls, idf)
             results = get_docs(doc_ids)
             # split results into pages
             i = 0
@@ -140,14 +147,31 @@ class Search:
         result = sorted(list(result))
         return result
 
-    def get_BM25_score(self, posting_lists:  List[List[PostingElement]],  doc_id_to_idx):
-        tf_matrix = np.zeros([len(doc_id_to_idx), len(posting_lists)])
-        for p in posting_lists:
-            for d in posting_lists.get_doc_ids():
-                pass
-        return np.array([])
+    def get_BM25_score(self, posting_lists:  List[List[PostingElement]],  doc_id_to_idx, idf):
+        num_terms = len(posting_lists)
+        num_docs = len(doc_id_to_idx)
+        avg_len = get_average_word_count()
+        doc_len = np.zeros(num_docs)
+        for doc_id, idx in doc_id_to_idx.items():
+            doc_len[idx] = get_doc_word_count(
+                get_doc_word_count[doc_id])/avg_len
+        doc_len = np.array(doc_len)
+        k = self.cfg['BM25_COEFF']
+        # TO be checked
+        tf_matrix = np.zeros([num_docs, num_terms])
+        for j, p in enumerate(posting_lists):
+            for d in p:
+                i = doc_id_to_idx[d.doc_id]
+                tf_matrix[i, j] = d.get_term_freq()
+        # TODO check whether this impl is right
+        tf_matrix = tf_matrix / (tf_matrix+.5+k*doc_len[:, np.ones(num_terms)])
 
-    def ranked_search(self, posting_lists: List[List[PostingElement]], method='BM25'):
+        weights = tf_matrix*idf
+        weights = weights.sum(axis=1)
+
+        return weights
+
+    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method='BM25'):
         '''
 
         :param posting_lists:
@@ -160,9 +184,9 @@ class Search:
             list(set([d.doc_id for d in p for p in posting_lists])))
         doc_id_to_idx = {doc_id: i for i, doc_id in enumerate(all_doc_ids)}
         if method == 'BM25':
-            doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx)
+            doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx, idf)
         else:
-            doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx)
+            doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx, idf)
 
         # for i, t in enumerate(parsed_q):
         #     for d in self.index[t]:

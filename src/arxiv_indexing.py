@@ -132,7 +132,7 @@ def get_term_index_file(key, index_dir: str):
     return pl_group
 
 
-def get_posting_list(term: str, index_dir):
+def get_posting_list(term: str, index_dir) -> PostingList:
     """        Get a posting list using term as the key
 
 
