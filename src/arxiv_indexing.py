@@ -184,7 +184,7 @@ def get_term_index_file(key, index_dir: str):
     with open(index_dir+str(key), 'r') as dictfile:
         js = dictfile.read()
         pl_object = json.loads(js)  # load posting list object using json
-    pl_group = pl_object.decode()
+    # pl_group = pl_object.decode()
     return pl_group
 
 
@@ -195,9 +195,6 @@ def get_posting_list(cfg, term: str, index_dir) -> PostingList:
     Arguments:
         term {[type]} -- [description]
         index_dir {[type]} -- [description]
-
-    Raises:
-        NotImplementedError: [description]
 
     Returns:
         posting_list: PostingList -- The posting_list for the term.
@@ -275,6 +272,7 @@ class BuildIndex:
         # TODO: build index for category?
         # Note: Use both large and small category as index. Eg. a paper might be categorized as cs.AI
         # we need to build 2 indices: #CS and #CS.AI
+        # TODO: build mapping from string doc id to int doc id
         raise NotImplementedError
 
     def build_index(self):
