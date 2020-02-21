@@ -23,7 +23,7 @@ class PostingElement:
         self.author = author
         self.positions = []
 
-    def get_term_freq():
+    def get_term_freq(self):
         """Term freq of the specific term in this document
         """
         return len(self.positions)
@@ -53,7 +53,7 @@ class PostingList:
         self.doc_list = []
         #raise NotImplementedError
 
-    def get_doc_posting(self, article, authors):
+    def get_doc_posting(self, article, authors)->PostingElement:
         """If a doc is recorded, return it; if not, create the postingElement for it and return it
 
         Arguments:
@@ -65,12 +65,16 @@ class PostingList:
         doc_id = article['id']
         if doc_id not in self.doc_ids:
             is_author = self.term in authors
-            # ideally doc id is inserted ascendingly
-            self.doc_list.append(PostingElement(
+            self.add_doc_ele(PostingElement(
                 self, doc_id,
                 author=is_author))
-            self.doc_ids[doc_id] = len(self.doc_list)-1
         return self.doc_list[self.doc_ids[doc_id]]
+
+    def add_doc_ele(self, doc_ele: PostingElement):
+        # ideally doc id is inserted ascendingly
+        doc_ele.parent = self
+        self.doc_list.append(doc_ele)
+        self.doc_ids[doc_id] = len(self.doc_list)-1
 
     def get_posting_by_docid(self, doc_id):
         if doc_id not in self.doc_ids:
@@ -80,19 +84,50 @@ class PostingList:
     def encode(self):
         """
             Apply index compression.
+            Format: doc_id/d_gap, is_author, num_positions, positions
             @return: byte array to save to disk
         """
-        raise NotImplementedError
-        return
+        global doc_id_2_doc_no, doc_no_2_doc_id
+        doc_no_list = sorted([doc_id_2_doc_no[doc_id]
+                              for doc_id in self.doc_ids])
+        byte_seq = bytearray()
+        prev_doc_no = 0
+        for d_no in doc_no_list:
+            d_gap = d_no-prev_doc_no
+            doc_element: PostingElement = self.get_posting_by_docid(
+                doc_no_2_doc_id[d_no])
+            num_positions = doc_element.get_term_freq()
+            all_info = [d_gap, doc_element.author,
+                        num_positions]+doc_element.positions
+            byte_seq.extend([v_byte_encode(i) for i in all_info])
+            prev_doc_no = d_no
+
+        return byte_seq
 
     @staticmethod
-    def decode(byte_seq):
+    def decode(term, byte_seq):
         """
             Decode index compression.
             @return: PostingList object
         """
-        raise NotImplementedError
-        return PostingList()
+        all_info = v_byte_decode(byte_seq)
+        pl = PostingList(term)
+        i = 0
+        doc_no = 0
+        while i < len(all_info):
+            doc_no += all_info[i]
+            doc_id = doc_no_2_doc_id[doc_no]
+            i += 1
+            is_author = all_info[i]
+            i += 1
+            num_positions = all_info[i]
+            i += 1
+            doc_ele: PostingElement = PostingElement(pl, doc_id, is_author)
+            for j in range(num_positions):
+                doc_ele.add_pos(all_info[i])
+                i += 1
+            pl.add_doc_ele(doc_ele)
+        return pl
 
     def get_doc_ids(self):
         """
@@ -126,12 +161,13 @@ class PostingList:
         return ""
 
 
-def get_term_key(cfg, term):
+def get_term_key(term):
     """
         convert a term into key. Terms with the same key will be saved into the same file.
         Used to find posting list group in cached_posting_list.
         See Index Storage and Compression section in report.
     """
+    global cfg
     obj = hashlib.md5()
     obj.update(term.encode("utf-8"))
     key = int(obj.hexdigest(), 16) % cfg['NUM_INDEX_FILES']
@@ -169,7 +205,7 @@ def get_posting_list(cfg, term: str, index_dir) -> PostingList:
                          Return None if not presented in index 
     """
     global cached_posting_list
-    key = get_term_key(cfg, term)
+    key = get_term_key(term)
     if key in cached_posting_list:
         # DONE: load
         d = cached_posting_list[key]
@@ -263,7 +299,7 @@ class BuildIndex:
         """
         raise NotImplementedError
 
-    def build_index_main(self, args):
+    def build_index_main(self):
         # DONE
         global cached_posting_list
         self.build_index()
@@ -277,7 +313,7 @@ class BuildIndex:
 
 
 if __name__ == "__main__":
-    global cached_posting_list
+    global cached_posting_list, cfg
     args = args_build_index()
     cfg = get_config(args)
     # dict of group of posting lists

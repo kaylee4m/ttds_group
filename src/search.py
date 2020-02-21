@@ -22,11 +22,6 @@ class Search:
         self.stopwords = set(nltk.corpus.stopwords.words('english'))
         self.index = []
         self.stemmer = nltk.stem.PorterStemmer()
-        self.cat_dict = {}
-        with open(cfg['CAT_ABBR_DICT'], 'r') as f:
-            for line in f.readlines():
-                abbr, full = line.strip().split()
-                self.cat_dict[abbr] = full
         self.searched_results = LRUCache(
             self.cfg['SEARCH_CACHE_SIZE'])  # cached dictionary
 
