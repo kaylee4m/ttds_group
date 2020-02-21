@@ -9,7 +9,7 @@ from nltk.stem import PorterStemmer
 from utils import *
 import hashlib
 from cachetools import LFUCache
-from typing import List
+from typing import List, Dict
 
 
 class PostingElement:
@@ -53,7 +53,7 @@ class PostingList:
         self.doc_list = []
         #raise NotImplementedError
 
-    def get_doc_posting(self, article, authors)->PostingElement:
+    def get_doc_posting(self, article, authors) -> PostingElement:
         """If a doc is recorded, return it; if not, create the postingElement for it and return it
 
         Arguments:
@@ -156,9 +156,6 @@ class PostingList:
         """
         return len(self.doc_list)
 
-    def __str__(self):
-        return ""
-
 
 def get_term_key(term):
     """
@@ -173,28 +170,26 @@ def get_term_key(term):
     return key
 
 
-def get_term_index_file(key, index_dir: str):
+def load_pl_group_by_key(key):
     """
         Find the index file associated with this key.
         A file contains many posting lists (each associated with one term)
     """
-    # TODO load from disk
+    # DONE load from disk
     #  decode  with PostingList.decode()
     # and return group of pls
-    with open(index_dir+str(key), 'r') as dictfile:
-        js = dictfile.read()
-        pl_object = json.loads(js)  # load posting list object using json
-    pl_group = pl_object.decode()
+    with open(get_index_file_path(key), 'r') as dictfile:
+        byte_group = pickle.load(dictfile)
+    pl_object = {k: PostingList.decode(k, v) for k, v in byte_group.items()}
     return pl_group
 
 
-def get_posting_list(cfg, term: str, index_dir) -> PostingList:
+def get_posting_list(cfg, term: str) -> PostingList:
     """        Get a posting list using term as the key
 
 
     Arguments:
         term {[type]} -- [description]
-        index_dir {[type]} -- [description]
 
     Raises:
         NotImplementedError: [description]
@@ -210,7 +205,7 @@ def get_posting_list(cfg, term: str, index_dir) -> PostingList:
         d = cached_posting_list[key]
         posting_list = d[term]
     else:
-        pl_group = get_term_index_file(key, index_dir)
+        pl_group = load_pl_group_by_key(key)
         # TODO add to cache
         cached_posting_list[key] = pl_group
         # Remember to save **asynchronously** to disk if some cached posting is discarded
@@ -218,19 +213,16 @@ def get_posting_list(cfg, term: str, index_dir) -> PostingList:
     return posting_list
 
 
-def save_posting_list_group(key, pl_group, index_dir):
+def save_posting_list_group(key: str, pl_group: Dict):
     """Save a posting list group to disk
 
     Arguments:
-        pl_group {dict} -- Dictionary of posting lists.
-
-    Raises:
-        NotImplementedError: [description]
+        key {str} -- [description]
+        pl_group {Dict} -- [description]
     """
-    saved_group = json.dumps(pl_group)
-    file = open(index_dir+"/"+str(key), 'w')
-    file.write(saved_group)
-    file.close()
+    byte_group = {k: v.encode() for k, v in pl_group.items()}
+    with open(get_index_file_path(key), 'wb') as file:
+        pickle.dump(byte_group, file)
 
 
 def preprocessing(stemmer, content, stop_words):
@@ -305,7 +297,7 @@ class BuildIndex:
         # save all the rest in cache
         for k, pl in cached_posting_list.items():
             assert type(pl) == PostingList
-            save_posting_list_group(k, pl, self.cfg['INDEX_DIR'])
+            save_posting_list_group(k, pl)
 
     def update_index_main(self, args):
         pass
@@ -315,6 +307,7 @@ if __name__ == "__main__":
     global cached_posting_list, cfg
     args = args_build_index()
     cfg = get_config(args)
+    createFolder(cfg['INDEX_DIR'])
     # dict of group of posting lists
     cached_posting_list = LFUCache(cfg['INDEX_CACHE_SIZE'])
     tool = BuildIndex(args)

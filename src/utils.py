@@ -1,6 +1,20 @@
 import argparse
 import yaml
 import json
+import os
+
+
+def createFolder(name, logfile=None):
+    name = name.strip().rstrip("/")
+    exist = os.path.exists(name)
+    if exist:
+        # print(name + " already here.")
+        pass
+    else:
+        # print(name + " created.")
+        os.makedirs(name)
+        if logfile:
+            record_log(logfile, name + " created.")
 
 
 def get_config(args):
@@ -70,7 +84,7 @@ def get_int_doc_id(doc_id: str):
     return doc_id_2_doc_no[doc_id]
 
 
-def get_str_doc_id(doc_id: int)->str:
+def get_str_doc_id(doc_id: int) -> str:
     global cfg, doc_no_2_doc_id, doc_id_2_doc_no
     if not "doc_no_2_doc_id" in globals():
         if not 'doc_id_2_doc_no' in globals():  # read from disk
@@ -103,6 +117,16 @@ def get_doc_word_count(doc_id):
         # read from disk
 
         raise NotImplementedError
+
+
+def get_index_file_path(key):
+    """A key -> a file
+
+    Arguments:
+        key {[type]} -- [description]
+    """
+    global cfg
+    return os.path.join(cfg['INDEX_DIR'], key)
 
 
 def v_byte_encode(n: int) -> bytearray:
