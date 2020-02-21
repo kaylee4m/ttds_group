@@ -154,8 +154,7 @@ class PostingList:
     def get_doc_freq(self):
         """Get document frequency of this term
         """
-        raise NotImplementedError
-        return 0
+        return len(self.doc_list)
 
     def __str__(self):
         return ""
