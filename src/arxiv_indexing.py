@@ -17,9 +17,10 @@ class PostingElement:
         Data structure for one element in posting list
     """
 
-    def __init__(self, par, doc_id, author=False):
+    def __init__(self, par, doc_id,category, author=False):
         self.parent = par
         self.doc_id = doc_id
+        self.category = category
         self.author = author
         self.positions = []
 
@@ -27,6 +28,9 @@ class PostingElement:
         """Term freq of the specific term in this document
         """
         return len(self.positions)
+
+    def get_doc_year(self):
+        return int(self.doc_id[:2])
 
     def add_pos(self, pos):
         """Add one position to positions
@@ -62,19 +66,20 @@ class PostingList:
         Returns:
             [type] -- [description]
         """
-        doc_id = article['id']
-        if doc_id not in self.doc_ids:
+        self.doc_id = article['id']
+        category = article['categories']
+        if self.doc_id not in self.doc_ids:
             is_author = self.term in authors
             self.add_doc_ele(PostingElement(
-                self, doc_id,
+                self, self.doc_id,category,
                 author=is_author))
-        return self.doc_list[self.doc_ids[doc_id]]
+        return self.doc_list[self.doc_ids[self.doc_id]]
 
     def add_doc_ele(self, doc_ele: PostingElement):
         # ideally doc id is inserted ascendingly
         doc_ele.parent = self
         self.doc_list.append(doc_ele)
-        self.doc_ids[doc_id] = len(self.doc_list)-1
+        self.doc_ids[self.doc_id] = len(self.doc_list)-1
 
     def get_posting_by_docid(self, doc_id):
         if doc_id not in self.doc_ids:
@@ -205,6 +210,9 @@ def get_posting_list(cfg, term: str) -> PostingList:
         d = cached_posting_list[key]
         posting_list = d[term]
     else:
+        if cached_posting_list.getsizeof == cfg['INDEX_CACHE_SIZE']:
+            poped_key,poped_pl_group = cached_posting_list.popitem()
+            save_posting_list_group(poped_key,poped_pl_group)
         pl_group = load_pl_group_by_key(key)
         # TODO add to cache
         cached_posting_list[key] = pl_group
@@ -239,7 +247,7 @@ class BuildIndex:
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def Doc(self, id, term_freq):
+    def Doc(self, id, term_freq):#remove unused function?
         return {id: term_freq}
 
     def process_one_article(self, article, stop_words, stemmer):
@@ -250,20 +258,23 @@ class BuildIndex:
         title = article['title']
         categories = article['categories']
         abstract = article['abstract']
-        authors = preprocessing(stemmer, " ".join(
-            article['authors']), stop_words)
+        authors = article['authors']
 
-        # TODO: combine title, author and content
+        # TODO: combine title, author and content %finished
         # use get_doc_year to get year from doc id,
         # before add year into index, make it special by using get_sp_term. "08" -> "#08"
         # use get_cat_tag to get special term for category
-        content = nltk.word_tokenize(title + abstract)
+        content = nltk.word_tokenize(authors+title + abstract)
         cleaned_words = preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
             pl: PostingList = get_posting_list(
-                self.cfg, word, self.cfg['INDEX_DIR'])
+                self.cfg, word, self.cfg['INDEX_DIR'])#should delete self.cfg['INDEX_DIR']? since we use a global cfg
             doc_posting: PostingElement = pl.get_doc_posting(article)
             doc_posting.add_pos(pos)
+
+        doc_length = len(content)
+
+
         # TODO: build index for category?
         # Note: Use both large and small category as index. Eg. a paper might be categorized as cs.AI
         # we need to build 2 indices: #CS and #CS.AI
@@ -275,6 +286,7 @@ class BuildIndex:
         """
 
         # TODO Only need to download once, please check this
+        global doc_num
         nltk.download('stopwords')
         stop_words = set(stopwords.words('english'))
         ps = PorterStemmer()
@@ -282,6 +294,10 @@ class BuildIndex:
             for line in tqdm.tqdm(fin.readlines()):
                 article = json.loads(line)
                 self.process_one_article(article, stop_words, ps)
+
+                doc_id2id[article['id']] = int(article['id'].replace('.', ''))
+                doc_num+=1
+
 
     def update_index(self, gz_file, index_dir):
         """
@@ -295,6 +311,7 @@ class BuildIndex:
         global cached_posting_list
         self.build_index()
         # save all the rest in cache
+
         for k, pl in cached_posting_list.items():
             assert type(pl) == PostingList
             save_posting_list_group(k, pl)
@@ -305,6 +322,9 @@ class BuildIndex:
 
 if __name__ == "__main__":
     global cached_posting_list, cfg
+    global doc_num,doc_id2id
+    doc_id2id = {}
+
     args = args_build_index()
     cfg = get_config(args)
     createFolder(cfg['INDEX_DIR'])
@@ -312,3 +332,9 @@ if __name__ == "__main__":
     cached_posting_list = LFUCache(cfg['INDEX_CACHE_SIZE'])
     tool = BuildIndex(args)
     tool.build_index_main()
+
+    #save the doc_id2id dict as json file
+    js = json.dumps(doc_id2id)
+    file = open(cfg['DOC_ID_2_DOC_NO'], 'w')
+    file.write(js)
+    file.close()
