@@ -39,18 +39,20 @@ def get_cat_tag(cat, sp="#"):
     return get_sp_term(cat.upper(), sp)
 
 
-def get_cat_fullname(cat):
+def get_cat_fullname(cfg, cat):
     """Convert category abbreviation to full name
 
     Arguments:
         cat {[type]} -- [description]
     """
-    if "cat_abbr_to_full" in globals():
+    if not "cat_abbr_to_full" in globals():
+        with open(cfg['CAT_ABBR_DICT'], 'r') as f:
+            con = f.read()
         global cat_abbr_to_full
-        return cat_abbr_to_full[cat]
-    else:
-        # read from file
-        raise NotImplementedError
+        lines = [line.split() for line in con.strip().split('\n')]
+        cat_abbr_to_full = {abbr: full for abbr, full in lines}
+    global cat_abbr_to_full
+    return cat_abbr_to_full[cat]
 
 
 def get_average_word_count():
