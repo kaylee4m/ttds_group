@@ -1,5 +1,6 @@
 import argparse
 import yaml
+import json
 
 
 def get_config(args):
@@ -39,12 +40,13 @@ def get_cat_tag(cat, sp="#"):
     return get_sp_term(cat.upper(), sp)
 
 
-def get_cat_fullname(cfg, cat):
+def get_cat_fullname(cat):
     """Convert category abbreviation to full name
 
     Arguments:
         cat {[type]} -- [description]
     """
+    global cfg
     if not "cat_abbr_to_full" in globals():
         with open(cfg['CAT_ABBR_DICT'], 'r') as f:
             con = f.read()
@@ -61,8 +63,23 @@ def get_average_word_count():
     raise NotImplementedError
 
 
+def get_int_doc_id(doc_id: str):
+    """TODO Find integer from
+
+    Arguments:
+        doc_id {str} -- [description]
+    """
+    global cfg
+    if not "doc_id_2_doc_no" in globals():
+        global doc_id_2_doc_no
+        with open(cfg['CAT_ABBR_DICT'], 'r') as f:
+            doc_id_2_doc_no = json.load(f)
+    global doc_id_2_doc_no
+    return doc_id_2_doc_no[doc_id]
+
+
 def get_doc_numbers():
-    """Get the number of documents
+    """Get the total number of documents
     """
     raise NotImplementedError
 
