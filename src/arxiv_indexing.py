@@ -273,6 +273,7 @@ class BuildIndex:
             doc_posting.add_pos(pos)
 
         doc_length = len(content)
+        doc_id2length[doc_id] = doc_length
 
 
         # TODO: build index for category?
@@ -322,8 +323,9 @@ class BuildIndex:
 
 if __name__ == "__main__":
     global cached_posting_list, cfg
-    global doc_num,doc_id2id
+    global doc_num,doc_id2id,doc_id2length
     doc_id2id = {}
+    doc_id2length = {}
 
     args = args_build_index()
     cfg = get_config(args)
@@ -338,3 +340,16 @@ if __name__ == "__main__":
     file = open(cfg['DOC_ID_2_DOC_NO'], 'w')
     file.write(js)
     file.close()
+    
+    #save the doc_id2length dict as json file
+    js = json.dumps(doc_id2length)
+    file = open(cfg['DOC_ID_2_DOC_LEN'], 'w')
+    file.write(js)
+    file.close()
+    
+    total_len = 0
+    for length in doc_id2length.values():
+        total_len+=length
+    aver_len = total_len/doc_num
+    print('average_len : ' + str(aver_len))
+

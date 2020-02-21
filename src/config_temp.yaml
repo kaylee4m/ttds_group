@@ -16,6 +16,7 @@ CAT_ABBR_DICT: "res/cat_abbr_full.txt"
 INDEX_CACHE_SIZE: 50
 NUM_INDEX_FILES: 1000
 DOC_ID_2_DOC_NO: ".json" # path to the mapping containing doc_id(str) to doc id (int)
+DOC_ID_2_DOC_LEN: ".json" # path to the mapping containing doc_id(str) to doc length(int)
 
 # search
 SEARCH_RESULTS_KEEP: 500
