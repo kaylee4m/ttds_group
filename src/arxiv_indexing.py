@@ -48,7 +48,7 @@ class PostingList:
 
     def __init__(self, term):
         self.term = term
-        # TODO: TO be decided whether we use a list or a binary tree
+        # DONE: TO be decided whether we use a list or a binary tree
         self.doc_ids = {}  # doc_id: idx in list
         self.doc_list = []
         #raise NotImplementedError
@@ -65,6 +65,7 @@ class PostingList:
         doc_id = article['id']
         if doc_id not in self.doc_ids:
             is_author = self.term in authors
+            # ideally doc id is inserted ascendingly
             self.doc_list.append(PostingElement(
                 self, doc_id,
                 author=is_author))
@@ -100,7 +101,7 @@ class PostingList:
         id_list = [element.doc_id for element in self.doc_list]
         return id_list
 
-    def get_postings(self, year_range: str="") -> List[PostingElement]:
+    def get_postings(self, year_range: str = "") -> List[PostingElement]:
         """
             Return all postings
             if year range is specified as "2019-2020" only return those published in these years
