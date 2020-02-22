@@ -17,10 +17,9 @@ class PostingElement:
         Data structure for one element in posting list
     """
 
-    def __init__(self, par, doc_id,category, author=False):
+    def __init__(self, par, doc_id,  author=False):
         self.parent = par
         self.doc_id = doc_id
-        self.category = category
         self.author = author
         self.positions = []
 
@@ -67,12 +66,10 @@ class PostingList:
             [type] -- [description]
         """
         self.doc_id = article['id']
-        category = article['categories']
         if self.doc_id not in self.doc_ids:
             is_author = self.term in authors
             self.add_doc_ele(PostingElement(
-                self, self.doc_id,category,
-                author=is_author))
+                self, self.doc_id, author=is_author))
         return self.doc_list[self.doc_ids[self.doc_id]]
 
     def add_doc_ele(self, doc_ele: PostingElement):
@@ -185,11 +182,11 @@ def load_pl_group_by_key(key):
     # and return group of pls
     with open(get_index_file_path(key), 'r') as dictfile:
         byte_group = pickle.load(dictfile)
-    pl_object = {k: PostingList.decode(k, v) for k, v in byte_group.items()}
+    pl_group = {k: PostingList.decode(k, v) for k, v in byte_group.items()}
     return pl_group
 
 
-def get_posting_list(cfg, term: str) -> PostingList:
+def get_posting_list(term: str) -> PostingList:
     """        Get a posting list using term as the key
 
 
@@ -200,27 +197,27 @@ def get_posting_list(cfg, term: str) -> PostingList:
         posting_list: PostingList -- The posting_list for the term.
                          Return None if not presented in index 
     """
-    global cached_posting_list
+    global cached_posting_list, cfg
     key = get_term_key(term)
     if key in cached_posting_list:
         # DONE: load
         d = cached_posting_list[key]
         posting_list = d[term]
     else:
+        #  add to cache
+        # save to disk if some cached posting is discarded
         if cached_posting_list.getsizeof == cfg['INDEX_CACHE_SIZE']:
-            poped_key,poped_pl_group = cached_posting_list.popitem()
-            save_posting_list_group(poped_key,poped_pl_group)
+            poped_key, poped_pl_group = cached_posting_list.popitem()
+            save_posting_list_group(poped_key, poped_pl_group)
         pl_group = load_pl_group_by_key(key)
-        # TODO add to cache
         cached_posting_list[key] = pl_group
-        # Remember to save **asynchronously** to disk if some cached posting is discarded
         posting_list = pl_group[term]
     return posting_list
 
 
 def save_posting_list_group(key: str, pl_group: Dict):
     """Save a posting list group to disk
-
+        # TODO Remember to save **asynchronously** to disk
     Arguments:
         key {str} -- [description]
         pl_group {Dict} -- [description]
@@ -244,7 +241,7 @@ class BuildIndex:
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def Doc(self, id, term_freq):#remove unused function?
+    def Doc(self, id, term_freq):  # remove unused function?
         return {id: term_freq}
 
     def process_one_article(self, article, stop_words, stemmer):
@@ -257,27 +254,32 @@ class BuildIndex:
         abstract = article['abstract']
         authors = article['authors']
 
-        # TODO: combine title, author and content %finished
+        # DONE: combine title, author and content %finished
         # use get_doc_year to get year from doc id,
         # before add year into index, make it special by using get_sp_term. "08" -> "#08"
         # use get_cat_tag to get special term for category
         content = nltk.word_tokenize(authors+title + abstract)
         cleaned_words = preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
-            pl: PostingList = get_posting_list(
-                self.cfg, word, self.cfg['INDEX_DIR'])#should delete self.cfg['INDEX_DIR']? since we use a global cfg
+            pl: PostingList = get_posting_list(word)
             doc_posting: PostingElement = pl.get_doc_posting(article)
             doc_posting.add_pos(pos)
 
+        # DONE: build mapping from string doc id to int doc id
         doc_length = len(content)
         doc_id2length[doc_id] = doc_length
+        doc_id2length['all'] += doc_length
 
-
-        # TODO: build index for category?
+        # DONE: build index for category?
         # Note: Use both large and small category as index. Eg. a paper might be categorized as cs.AI
         # we need to build 2 indices: #CS and #CS.AI
-        # TODO: build mapping from string doc id to int doc id
-        raise NotImplementedError
+
+        for cat in article['categories'][0].split():
+            larger_cat = get_cat_tag(cat.split('.')[0])
+            pl: PostingList = get_posting_list(larger_cat)
+            pl.get_doc_posting(article)  # if in it
+            pl: PostingList = get_posting_list(cat)
+            pl.get_doc_posting(article)
 
     def build_index(self):
         """
@@ -285,18 +287,17 @@ class BuildIndex:
         """
 
         # TODO Only need to download once, please check this
-        global doc_num
+        doc_num = 0
         nltk.download('stopwords')
         stop_words = set(stopwords.words('english'))
         ps = PorterStemmer()
-        with gzip.open(gz_file, 'rt', encoding='utf-8') as fin:
+        with gzip.open(self.cfg['ALL_DATA'], 'rt', encoding='utf-8') as fin:
             for line in tqdm.tqdm(fin.readlines()):
                 article = json.loads(line)
                 self.process_one_article(article, stop_words, ps)
 
-                doc_id2id[article['id']] = int(article['id'].replace('.', ''))
-                doc_num+=1
-
+                doc_id_2_doc_no[article['id']] = doc_num
+                doc_num += 1
 
     def update_index(self, gz_file, index_dir):
         """
@@ -321,9 +322,9 @@ class BuildIndex:
 
 if __name__ == "__main__":
     global cached_posting_list, cfg
-    global doc_num,doc_id2id,doc_id2length
-    doc_id2id = {}
-    doc_id2length = {}
+    global doc_num, doc_id_2_doc_no, doc_id2length
+    doc_id_2_doc_no = {}
+    doc_id2length = defaultdict(int)
 
     args = args_build_index()
     cfg = get_config(args)
@@ -333,21 +334,18 @@ if __name__ == "__main__":
     tool = BuildIndex(args)
     tool.build_index_main()
 
-    #save the doc_id2id dict as json file
-    js = json.dumps(doc_id2id)
+    # save the doc_id_2_doc_no dict as json file
+    js = json.dumps(doc_id_2_doc_no)
     file = open(cfg['DOC_ID_2_DOC_NO'], 'w')
     file.write(js)
     file.close()
-    
-    #save the doc_id2length dict as json file
+
+    total_len = 0
+    for length in doc_id2length.values():
+        total_len += length
+    doc_id2length['avg'] = doc_id2length['all']/doc_num
+    # save the doc_id2length dict as json file
     js = json.dumps(doc_id2length)
     file = open(cfg['DOC_ID_2_DOC_LEN'], 'w')
     file.write(js)
     file.close()
-    
-    total_len = 0
-    for length in doc_id2length.values():
-        total_len+=length
-    aver_len = total_len/doc_num
-    print('average_len : ' + str(aver_len))
-

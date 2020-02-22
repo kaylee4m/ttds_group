@@ -41,7 +41,7 @@ class Search:
         key = q['keyword'] + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
             words = preprocessing(self.stemmer, q['keyword'], self.stopwords)
-            ori_pls = [get_posting_list(self.cfg, w, self.cfg['INDEX_DIR'])
+            ori_pls = [get_posting_list(w)
                        for w in words]
             total_docs = get_doc_numbers()
             df = [p.get_doc_freq() for p in ori_pls]
@@ -51,8 +51,8 @@ class Search:
             if q['category']:
                 cats = [get_cat_tag(c.strip()) for c in q["category"].split(
                     self.cfg['CAT_SPLIT_SYMB'])]
-                cat_pls = [get_posting_list(self.cfg,
-                                            c, self.cfg['INDEX_DIR']).get_postings(q['range']) for c in cats]
+                cat_pls = [get_posting_list(c).get_postings(
+                    q['range']) for c in cats]
                 cat_pl_set: Set(PostingElement) = reduce(
                     set.union, [set(p) for p in cat_pls])
                 pls = self.boolean_search(pls, cat_pl_set)

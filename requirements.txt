@@ -2,3 +2,4 @@ scholarly
 flask
 cachetools 
 pyyaml
+fast-autocomplete
