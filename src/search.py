@@ -40,6 +40,7 @@ class Search:
         """
         key = q['keyword'] + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
+            # TODO see if prepro is used correctly
             words = preprocessing(self.stemmer, q['keyword'], self.stopwords)
             ori_pls = [get_posting_list(w)
                        for w in words]

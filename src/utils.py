@@ -2,9 +2,10 @@ import argparse
 import yaml
 import json
 import os
+from global_settings import settings
 
 
-def createFolder(name, logfile=None):
+def createFolder(name, logfile = None):
     name = name.strip().rstrip("/")
     exist = os.path.exists(name)
     if exist:
@@ -13,8 +14,6 @@ def createFolder(name, logfile=None):
     else:
         # print(name + " created.")
         os.makedirs(name)
-        if logfile:
-            record_log(logfile, name + " created.")
 
 
 def get_config(args):
@@ -23,8 +22,8 @@ def get_config(args):
     """
     cfg_file = args.cfg
     with open(cfg_file, 'r') as f:
-        cfg = yaml.safe_load(f)
-    return cfg
+        settings['cfg'] = yaml.safe_load(f)
+    return settings['cfg']
 
 
 def args_build_index():
@@ -32,13 +31,14 @@ def args_build_index():
         Set command line arguments for index builder
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cfg", default='config.yaml', required=False)
-
+    parser.add_argument("--cfg",
+                        default = 'config.yaml', required = False)
+    
     return parser.parse_args()
 
 
-def get_sp_term(term, sp="#"):
-    return sp+term
+def get_sp_term(term, sp = "#"):
+    return sp + term
 
 
 def get_doc_year(doc_id: str) -> str:
@@ -50,7 +50,7 @@ def get_doc_year(doc_id: str) -> str:
     return year
 
 
-def get_cat_tag(cat, sp="#"):
+def get_cat_tag(cat, sp = "#"):
     return get_sp_term(cat.upper(), sp)
 
 
@@ -60,14 +60,12 @@ def get_cat_fullname(cat):
     Arguments:
         cat {[type]} -- [description]
     """
-    global cfg
-    if not "cat_abbr_to_full" in globals():
-        with open(cfg['CAT_ABBR_DICT'], 'r') as f:
+    if not "settings['cat_abbr_to_full']" in globals():
+        with open(settings['cfg']['CAT_ABBR_DICT'], 'r') as f:
             con = f.read()
-        global cat_abbr_to_full
         lines = [line.split() for line in con.strip().split('\n')]
-        cat_abbr_to_full = {abbr: full for abbr, full in lines}
-    return cat_abbr_to_full[cat]
+        settings['cat_abbr_to_full'] = {abbr: full for abbr, full in lines}
+    return settings['cat_abbr_to_full'][cat]
 
 
 def get_average_word_count():
@@ -77,22 +75,21 @@ def get_average_word_count():
 
 
 def get_int_doc_id(doc_id: str):
-    global cfg, doc_id_2_doc_no
-    if not "doc_id_2_doc_no" in globals():
-        with open(cfg['DOC_ID_2_DOC_NO'], 'r') as f:
-            doc_id_2_doc_no = json.load(f)
-    return doc_id_2_doc_no[doc_id]
+    if not len(settings['doc_id_2_doc_no']):
+        with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
+            settings['doc_id_2_doc_no'] = json.load(f)
+    return settings['doc_id_2_doc_no'][doc_id]
 
 
 def get_str_doc_id(doc_id: int) -> str:
-    global cfg, doc_no_2_doc_id, doc_id_2_doc_no
-    if not "doc_no_2_doc_id" in globals():
-        if not 'doc_id_2_doc_no' in globals():  # read from disk
-            with open(cfg['DOC_ID_2_DOC_NO'], 'r') as f:
-                doc_id_2_doc_no = json.load(f)
-        doc_no_2_doc_id = {v: k for k, v in doc_id_2_doc_no.items()}
-
-    return doc_no_2_doc_id[doc_id]
+    if not len(settings['doc_no_2_doc_id']):
+        if not len(settings['doc_id_2_doc_no']):  # read from disk
+            with open(settings['cfg']['DOC_ID_2_DOC_NO'], 'r') as f:
+                settings['doc_id_2_doc_no'] = json.load(f)
+        settings['doc_no_2_doc_id'] = {
+            v: k for k, v in settings['doc_id_2_doc_no'].items()}
+    
+    return settings['doc_no_2_doc_id'][doc_id]
 
 
 def get_doc_numbers():
@@ -110,13 +107,11 @@ def get_doc_word_count(doc_id):
     Returns:
         [type] -- [description]
     """
-    global doc_word_count
-    if 'doc_word_count' in globals():
-        return doc_word_count[doc_id]
-    else:
+    if 'doc_word_count' not in globals():
         # read from disk
-
-        raise NotImplementedError
+        with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
+            doc_word_count = json.load(f)
+    return doc_word_count[doc_id]
 
 
 def get_index_file_path(key):
@@ -125,8 +120,7 @@ def get_index_file_path(key):
     Arguments:
         key {[type]} -- [description]
     """
-    global cfg
-    return os.path.join(cfg['INDEX_DIR'], key)
+    return os.path.join(settings['cfg']['INDEX_DIR'], '_'.join([settings['cfg']['INDEX_PREFIX'], str(key)]) + '.pkl')
 
 
 def v_byte_encode(n: int) -> bytearray:
@@ -140,7 +134,7 @@ def v_byte_encode(n: int) -> bytearray:
         b.insert(0, n % 128)
         if n < 128:
             break
-        n = int(n/128)
+        n = int(n / 128)
     b[-1] += 128
     return b
 
@@ -150,9 +144,9 @@ def v_byte_decode(bytestream: bytearray) -> int:
     n = 0
     for i, b in enumerate(bytestream):
         if b < 128:
-            n = 128*n+b
+            n = 128 * n + b
         else:
-            n = 128*n+(b-128)
+            n = 128 * n + (b - 128)
             nums.append(n)
             n = 0
     return nums
