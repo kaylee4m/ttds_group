@@ -1,0 +1,66 @@
+.result-header {
+    display: flex;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    background: rgb(243, 243, 243);
+    border-bottom: 1px solid #ddd;
+}
+.logo-wrapper img {
+    height: 100px;
+}
+.logo-wrapper {
+    text-align: center;
+}
+.left-w {
+    min-width: 300px;
+}
+.info {
+    display: flex;
+    height: 50px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    align-items: center;
+}
+.result-body {
+    height: calc(100vh - 150px);
+    display: flex;
+}
+.result-body .left {
+    padding: 20px;
+}
+.el-checkbox-group {
+    display: flex;
+    flex-direction: column;
+}
+.custom-range {
+    margin: 10px 0;
+}
+.right .item {
+    padding: 15px 0;
+    width: 80%;
+}
+.right {
+    height: 100%;
+    overflow: auto;
+    flex: 1
+}
+.title {
+    color: rgb(31,34,143);
+    font-weight: bold;
+    font-size: 24px;
+}
+.author {
+    color: rgb(64,99,73);
+    font-size: 18px;
+    margin: 5px 0;
+    text-decoration: underline;
+}
+.content {
+    font-size: 16px;
+    line-height: 1.5;
+}
+.cited {
+    color: rgb(31,34,143);
+    margin-top: 5px;
+}
