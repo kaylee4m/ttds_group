@@ -19,7 +19,7 @@ def getDB(db_config):
         return None, None
 
 def get_docs(doc_id):
-    """ Get document meta info from database
+    """ Get document meta info from database"""
     db_config = {
         'host': '127.0.0.1',
         'user': 'SE',
@@ -56,8 +56,7 @@ def get_docs(doc_id):
 
 
 def get_citations(article: dict):
-    """Get the citation numbers from google scholar using scholarly and match the given paper with searched results
-
+    """Get the citation numbers from google scholar using scholarly and match the given paper with searched results"""
     title = article['title']
     num_of_citation = 0
     keyword = title.replace('\n','') #take out '\n' in titles
