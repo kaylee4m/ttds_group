@@ -76,18 +76,23 @@ def get_average_word_count():
 
 def get_int_doc_id(doc_id: str):
     if not len(settings['doc_id_2_doc_no']):
-        with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
-            settings['doc_id_2_doc_no'] = json.load(f)
+        if os.path.exists(settings['cfg']['DOC_ID_2_DOC_LEN']):
+            with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
+                settings['doc_id_2_doc_no'] = json.load(f)
+        else:
+            # initialize
+            settings['doc_id_2_doc_no']['NEXT'] = 0
     return settings['doc_id_2_doc_no'][doc_id]
 
 
 def get_str_doc_id(doc_id: int) -> str:
     if not len(settings['doc_no_2_doc_id']):
-        if not len(settings['doc_id_2_doc_no']):  # read from disk
+        if not len(settings['doc_id_2_doc_no']) and os.path.exists(
+                settings['cfg']['DOC_ID_2_DOC_LEN']):  # read from disk
             with open(settings['cfg']['DOC_ID_2_DOC_NO'], 'r') as f:
                 settings['doc_id_2_doc_no'] = json.load(f)
-        settings['doc_no_2_doc_id'] = {
-            v: k for k, v in settings['doc_id_2_doc_no'].items()}
+    settings['doc_no_2_doc_id'] = {
+        v: k for k, v in settings['doc_id_2_doc_no'].items()}
     
     return settings['doc_no_2_doc_id'][doc_id]
 
@@ -120,7 +125,8 @@ def get_index_file_path(key):
     Arguments:
         key {[type]} -- [description]
     """
-    return os.path.join(settings['cfg']['INDEX_DIR'], '_'.join([settings['cfg']['INDEX_PREFIX'], str(key)]) + '.pkl')
+    return os.path.join(settings['cfg']['INDEX_DIR'],
+                        '_'.join([settings['cfg']['INDEX_PREFIX'], '{:03d}'.format(key)]) + '.pkl')
 
 
 def v_byte_encode(n: int) -> bytearray:

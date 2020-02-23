@@ -3,3 +3,4 @@ flask
 cachetools 
 pyyaml
 fast-autocomplete
+contractions

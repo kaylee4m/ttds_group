@@ -8,10 +8,11 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from utils import *
 import hashlib
-from cachetools import LFUCache
+from cachetools import *
 from typing import List, Dict
 from global_settings import settings
 import os
+import contractions
 
 
 class PostingElement:
@@ -44,6 +45,9 @@ class PostingElement:
     
     def __hash__(self):
         return hash(self.parent.term + self.doc_id)
+    
+    def __str__(self):
+        return "%s-%s" % (self.parent.term, self.doc_id)
 
 
 class PostingList:
@@ -78,7 +82,7 @@ class PostingList:
         # ideally doc id is inserted ascendingly
         doc_ele.parent = self
         self.doc_list.append(doc_ele)
-        self.doc_ids[self.doc_id] = len(self.doc_list) - 1
+        self.doc_ids[doc_ele.doc_id] = len(self.doc_list) - 1
     
     def get_posting_by_docid(self, doc_id):
         if doc_id not in self.doc_ids:
@@ -91,18 +95,16 @@ class PostingList:
             Format: doc_id/d_gap, is_author, num_positions, positions
             @return: byte array to save to disk
         """
-        doc_no_list = sorted([settings['doc_id_2_doc_no'][doc_id]
-                              for doc_id in self.doc_ids])
+        doc_no_list = sorted([get_int_doc_id(doc_id) for doc_id in self.doc_ids])
         byte_seq = bytearray()
         prev_doc_no = 0
         for d_no in doc_no_list:
             d_gap = d_no - prev_doc_no
-            doc_element: PostingElement = self.get_posting_by_docid(
-                settings['doc_no_2_doc_id'][d_no])
+            doc_element: PostingElement = self.get_posting_by_docid(get_str_doc_id(d_no))
             num_positions = doc_element.get_term_freq()
-            all_info = [d_gap, doc_element.author,
+            all_info = [d_gap, int(doc_element.author),
                         num_positions] + doc_element.positions
-            byte_seq.extend([v_byte_encode(i) for i in all_info])
+            byte_seq.extend(b''.join([v_byte_encode(i) for i in all_info]))
             prev_doc_no = d_no
         
         return byte_seq
@@ -119,7 +121,7 @@ class PostingList:
         doc_no = 0
         while i < len(all_info):
             doc_no += all_info[i]
-            doc_id = settings['doc_no_2_doc_id'][doc_no]
+            doc_id = get_str_doc_id(doc_no)
             i += 1
             is_author = all_info[i]
             i += 1
@@ -187,9 +189,13 @@ def load_pl_group_by_term(term):
         with open(path, 'rb') as dictfile:
             byte_group = pickle.load(dictfile)
         pl_group = {k: PostingList.decode(k, v) for k, v in byte_group.items()}
+        
+        if settings['cfg']['DEBUG']:
+            print("Load  %s." % (get_index_file_path(key)))
+    
     else:
         # create a new group
-        pl_group = defaultdict(lambda: PostingList(term))
+        pl_group = {term: PostingList(term)}
     return pl_group
 
 
@@ -207,16 +213,20 @@ def get_posting_list(term: str) -> PostingList:
     key = get_term_key(term)
     if key in settings['cached_posting_list']:
         # DONE: load
-        d = settings['cached_posting_list'][key]
-        posting_list = d[term]
+        pl_group = settings['cached_posting_list'][key]
     else:
         #  add to cache
         # save to disk if some cached posting is discarded
-        if settings['cached_posting_list'].getsizeof == settings['cfg']['INDEX_CACHE_SIZE']:
+        while len(settings['cached_posting_list']) >= settings['cfg']['INDEX_CACHE_SIZE']:
             poped_key, poped_pl_group = settings['cached_posting_list'].popitem()
             save_posting_list_group(poped_key, poped_pl_group)
         pl_group = load_pl_group_by_term(term)
         settings['cached_posting_list'][key] = pl_group
+        # actually, load by key, so there might be prob that this term is not in the dict
+    if not term in pl_group:
+        posting_list = PostingList(term)
+        pl_group[term] = posting_list
+    else:
         posting_list = pl_group[term]
     return posting_list
 
@@ -231,9 +241,13 @@ def save_posting_list_group(key: str, pl_group: Dict):
     byte_group = {k: v.encode() for k, v in pl_group.items()}
     with open(get_index_file_path(key), 'wb') as file:
         pickle.dump(byte_group, file)
+        if settings['cfg']['DEBUG']:
+            print("Save  %s." % (get_index_file_path(key)))
 
 
 def preprocessing(stemmer, content, stop_words):
+    # TODO: split at '-'
+    # TODO: Dont filter out words with punctuations, deal with it
     cleaned_list = []
     for i in content:
         i = i.lower()
@@ -264,7 +278,8 @@ class BuildIndex:
         # use get_doc_year to get year from doc id,
         # before add year into index, make it special by using get_sp_term. "08" -> "#08"
         # use get_cat_tag to get special term for category
-        content = nltk.word_tokenize(authors + title + abstract)
+        content_fixed = contractions.fix(authors + title + abstract, slang = False)
+        content = nltk.word_tokenize(content_fixed)
         cleaned_words = preprocessing(stemmer, content, stop_words)
         for pos, word in enumerate(cleaned_words):
             pl: PostingList = get_posting_list(word)
@@ -272,7 +287,7 @@ class BuildIndex:
             doc_posting.add_pos(pos)
         
         # DONE: build mapping from string doc id to int doc id
-        doc_length = len(content)
+        doc_length = len(nltk.word_tokenize(abstract))
         doc_id2length[doc_id] = doc_length
         doc_id2length['all'] += doc_length
         
@@ -281,10 +296,10 @@ class BuildIndex:
         # we need to build 2 indices: #CS and #CS.AI
         
         for cat in categories[0].split():
-            larger_cat = get_cat_tag(cat.split('.')[0])
-            pl: PostingList = get_posting_list(larger_cat)
+            larger_cat = cat.split('.')[0]
+            pl: PostingList = get_posting_list(get_cat_tag(larger_cat))
             pl.get_doc_posting(article, [])  # if in it
-            pl: PostingList = get_posting_list(cat)
+            pl: PostingList = get_posting_list(get_cat_tag(cat))
             pl.get_doc_posting(article, [])
     
     def build_index(self):
@@ -293,17 +308,20 @@ class BuildIndex:
         """
         
         # TODO Only need to download once, please check this
-        doc_num = 0
         nltk.download('stopwords')
         stop_words = set(stopwords.words('english'))
         ps = PorterStemmer()
         with gzip.open(self.cfg['ALL_DATA'], 'rt', encoding = 'utf-8') as fin:
-            for line in tqdm.tqdm(fin.readlines()):
+            for i, line in tqdm.tqdm(enumerate(fin.readlines())):
+                if i > 100: break
                 article = json.loads(line)
                 self.process_one_article(article, stop_words, ps)
-                
-                settings['doc_id_2_doc_no'][article['id']] = doc_num
-                doc_num += 1
+                # put this after processing, because we need to
+                if article['id'] not in settings['doc_id_2_doc_no']:
+                    doc_num = get_int_doc_id('NEXT')
+                    settings['doc_id_2_doc_no'][article['id']] = doc_num
+                    settings['doc_no_2_doc_id'][doc_num] = article['id']
+                    settings['doc_id_2_doc_no']['NEXT'] += 1
     
     def update_index(self, gz_file, index_dir):
         """
@@ -317,9 +335,8 @@ class BuildIndex:
         self.build_index()
         # save all the rest in cache
         
-        for k, pl in settings['cached_posting_list'].items():
-            assert type(pl) == PostingList
-            save_posting_list_group(k, pl)
+        for k, pl_group in settings['cached_posting_list'].items():
+            save_posting_list_group(k, pl_group)
     
     def update_index_main(self, args):
         pass
@@ -333,7 +350,7 @@ if __name__ == "__main__":
     settings['cfg'] = get_config(args)
     createFolder(settings['cfg']['INDEX_DIR'])
     # dict of group of posting lists
-    settings['cached_posting_list'] = LFUCache(
+    settings['cached_posting_list'] = LRUCache(
         settings['cfg']['INDEX_CACHE_SIZE'])
     tool = BuildIndex(settings['cfg'])
     tool.build_index_main()
@@ -344,8 +361,6 @@ if __name__ == "__main__":
         file.write(js)
     
     total_len = 0
-    for length in doc_id2length.values():
-        total_len += length
     doc_id2length['avg'] = 0
     # -2 for all and avg
     doc_id2length['avg'] = int(doc_id2length['all'] / (len(doc_id2length) - 2))
