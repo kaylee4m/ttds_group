@@ -2,6 +2,9 @@
 import scholarly
 import MySQLdb
 import warnings
+import urllib.parse
+import urllib.request
+import re
 
 def getDB(db_config):
     try:
