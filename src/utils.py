@@ -68,12 +68,6 @@ def get_cat_fullname(cat):
     return settings['cat_abbr_to_full'][cat]
 
 
-def get_average_word_count():
-    """Get average number of words in documents
-    """
-    raise NotImplementedError
-
-
 def get_int_doc_id(doc_id: str):
     if not len(settings['doc_id_2_doc_no']):
         if os.path.exists(settings['cfg']['DOC_ID_2_DOC_NO']):
@@ -91,8 +85,8 @@ def get_str_doc_id(doc_id: int) -> str:
                 settings['cfg']['DOC_ID_2_DOC_NO']):  # read from disk
             with open(settings['cfg']['DOC_ID_2_DOC_NO'], 'r') as f:
                 settings['doc_id_2_doc_no'] = json.load(f)
-    settings['doc_no_2_doc_id'] = {
-        v: k for k, v in settings['doc_id_2_doc_no'].items()}
+        settings['doc_no_2_doc_id'] = {
+            v: k for k, v in settings['doc_id_2_doc_no'].items()}
     
     return settings['doc_no_2_doc_id'][doc_id]
 
@@ -100,7 +94,19 @@ def get_str_doc_id(doc_id: int) -> str:
 def get_doc_numbers():
     """Get the total number of documents
     """
-    raise NotImplementedError
+    if not len(settings['doc_id2length']):
+        with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
+            settings['doc_id2length'] = json.load(f)
+    return len(settings['doc_id2length']) - 2
+
+
+def get_average_word_count():
+    """Get average number of words in documents
+    """
+    if not len(settings['doc_id2length']):
+        with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
+            settings['doc_id2length'] = json.load(f)
+    return settings['doc_id2length']['avg']
 
 
 def get_doc_word_count(doc_id):
@@ -112,11 +118,10 @@ def get_doc_word_count(doc_id):
     Returns:
         [type] -- [description]
     """
-    if 'doc_word_count' not in globals():
-        # read from disk
+    if not len(settings['doc_id2length']):
         with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
-            doc_word_count = json.load(f)
-    return doc_word_count[doc_id]
+            settings['doc_id2length'] = json.load(f)
+    return settings['doc_id2length'][doc_id]
 
 
 def get_index_file_path(key):

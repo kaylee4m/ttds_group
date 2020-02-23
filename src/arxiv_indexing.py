@@ -192,7 +192,7 @@ def load_pl_group_by_term(term):
             byte_group = pickle.load(dictfile)
         pl_group = {k: PostingList.decode(k, v) for k, v in byte_group.items()}
         
-        if settings['cfg']['DEBUG']:
+        if settings['cfg']['DEBUG_PRINT']:
             print("Load  %s." % (get_index_file_path(key)))
     
     else:
@@ -221,7 +221,6 @@ def get_posting_list(term: str) -> PostingList:
         # save to disk if some cached posting is discarded
         while len(settings['cached_posting_list']) >= settings['cfg']['INDEX_CACHE_SIZE']:
             poped_key, poped_pl_group = settings['cached_posting_list'].popitem()
-            # multiprocessing.Process(target = save_posting_list_group,args=(poped_key,poped_pl_group)).start()
             # threading.Thread(target = save_posting_list_group, args = (poped_key, poped_pl_group)).start()
             save_posting_list_group(poped_key, poped_pl_group)
         pl_group = load_pl_group_by_term(term)
@@ -245,7 +244,7 @@ def save_posting_list_group(key: str, pl_group: Dict):
     byte_group = {k: v.encode() for k, v in pl_group.items()}
     with open(get_index_file_path(key), 'wb') as file:
         pickle.dump(byte_group, file)
-        if settings['cfg']['DEBUG']:
+        if settings['cfg']['DEBUG_PRINT']:
             print("Save  %s." % (get_index_file_path(key)))
 
 
@@ -312,20 +311,21 @@ class BuildIndex:
         """
         
         # TODO Only need to download once, please check this
+        doc_num = get_int_doc_id('NEXT') # init doc_id_2_doc_no
         nltk.download('stopwords')
         stop_words = set(stopwords.words('english'))
         ps = PorterStemmer()
         with gzip.open(self.cfg['ALL_DATA'], 'rt', encoding = 'utf-8') as fin:
             for i, line in enumerate(tqdm.tqdm(fin.readlines())):
-                if i > 100: break
+                # if i > 1000: break
                 article = json.loads(line)
-                self.process_one_article(article, stop_words, ps)
                 # put this after processing, because we need to
                 if article['id'] not in settings['doc_id_2_doc_no']:
                     doc_num = get_int_doc_id('NEXT')
                     settings['doc_id_2_doc_no'][article['id']] = doc_num
                     settings['doc_no_2_doc_id'][doc_num] = article['id']
                     settings['doc_id_2_doc_no']['NEXT'] += 1
+                self.process_one_article(article, stop_words, ps)
     
     def update_index(self, gz_file, index_dir):
         """
@@ -338,7 +338,6 @@ class BuildIndex:
         # DONE
         self.build_index()
         # save all the rest in cache
-        
         for k, pl_group in settings['cached_posting_list'].items():
             save_posting_list_group(k, pl_group)
     
