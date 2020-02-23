@@ -13,6 +13,8 @@ from typing import List, Dict
 from global_settings import settings
 import os
 import contractions
+import multiprocessing
+import threading
 
 
 class PostingElement:
@@ -219,6 +221,8 @@ def get_posting_list(term: str) -> PostingList:
         # save to disk if some cached posting is discarded
         while len(settings['cached_posting_list']) >= settings['cfg']['INDEX_CACHE_SIZE']:
             poped_key, poped_pl_group = settings['cached_posting_list'].popitem()
+            # multiprocessing.Process(target = save_posting_list_group,args=(poped_key,poped_pl_group)).start()
+            # threading.Thread(target = save_posting_list_group, args = (poped_key, poped_pl_group)).start()
             save_posting_list_group(poped_key, poped_pl_group)
         pl_group = load_pl_group_by_term(term)
         settings['cached_posting_list'][key] = pl_group
@@ -312,7 +316,7 @@ class BuildIndex:
         stop_words = set(stopwords.words('english'))
         ps = PorterStemmer()
         with gzip.open(self.cfg['ALL_DATA'], 'rt', encoding = 'utf-8') as fin:
-            for i, line in tqdm.tqdm(enumerate(fin.readlines())):
+            for i, line in enumerate(tqdm.tqdm(fin.readlines())):
                 if i > 100: break
                 article = json.loads(line)
                 self.process_one_article(article, stop_words, ps)

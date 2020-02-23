@@ -76,8 +76,8 @@ def get_average_word_count():
 
 def get_int_doc_id(doc_id: str):
     if not len(settings['doc_id_2_doc_no']):
-        if os.path.exists(settings['cfg']['DOC_ID_2_DOC_LEN']):
-            with open(settings['cfg']['DOC_ID_2_DOC_LEN'], 'r') as f:
+        if os.path.exists(settings['cfg']['DOC_ID_2_DOC_NO']):
+            with open(settings['cfg']['DOC_ID_2_DOC_NO'], 'r') as f:
                 settings['doc_id_2_doc_no'] = json.load(f)
         else:
             # initialize
@@ -88,7 +88,7 @@ def get_int_doc_id(doc_id: str):
 def get_str_doc_id(doc_id: int) -> str:
     if not len(settings['doc_no_2_doc_id']):
         if not len(settings['doc_id_2_doc_no']) and os.path.exists(
-                settings['cfg']['DOC_ID_2_DOC_LEN']):  # read from disk
+                settings['cfg']['DOC_ID_2_DOC_NO']):  # read from disk
             with open(settings['cfg']['DOC_ID_2_DOC_NO'], 'r') as f:
                 settings['doc_id_2_doc_no'] = json.load(f)
     settings['doc_no_2_doc_id'] = {
