@@ -139,3 +139,4 @@ dmypy.json
 /src/se_index/
 src/res/DOC_ID_2_DOC_LEN.json
 src/res/DOC_ID_2_DOC_NO.json
+/mysqlclient-1.4.6-cp36-cp36m-win_amd64.whl

@@ -4,3 +4,4 @@ cachetools
 pyyaml
 fast-autocomplete
 contractions
+MySQL-python

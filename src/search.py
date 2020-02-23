@@ -23,7 +23,7 @@ class Search:
     
     def search(self, q, query_type = None, ):
         """Search by query
-
+            pageNum should start from 1
         Arguments:
             :param q:  query. dictionary. keys are "keyword", "pageNum", "range"(years), "category"
 
@@ -38,11 +38,10 @@ class Search:
         if key not in self.searched_results:
             # TODO see if prepro is used correctly
             words = preprocessing(self.stemmer, q['keyword'].split(), self.stopwords)
-            ori_pls = [get_posting_list(w)
-                       for w in words]
+            ori_pls = [get_posting_list(w) for w in words]
             total_docs = get_doc_numbers()
             df = [p.get_doc_freq() for p in ori_pls]
-            pls = [p.get_postings(q['range']) for p in ori_pls]
+            pls: List[List[PostingElement]] = [p.get_postings(q['range']) for p in ori_pls]
             # DONE: Filter categories. pls should be List[List[PostingElement]]
             # Assume categories are abbreviation
             if q['category']:
@@ -53,16 +52,16 @@ class Search:
                 cat_pl_set: Set[PostingElement] = reduce(set.union, [set(p) for p in cat_pls])
                 pls = self.boolean_search(pls, cat_pl_set)
                 # if a term does not appear in a specific category, no need to search among these
-                df = [df[i] for i, p in enumerate(pls) if p]
-                pls = [p[i] for i, p in enumerate(pls) if p]
+            df = [df[i] for i, p in enumerate(pls) if p]
+            pls = [pls[i] for i, p in enumerate(pls) if p]
             df = np.array(df)
             idf = np.log10((total_docs - df + .5) / (df + .5))
             # Search the rest posting lists
             doc_ids = self.ranked_search(pls, idf)
-            results = get_docs(doc_ids)
+            results = [get_doc(d_id) for d_id in doc_ids]
             # split results into pages
             i = 0
-            split_results = []
+            split_results = [[]]  # 0 for no results, page number starts from 1
             while i < len(results):
                 end = min(i + self.cfg['SEARCH_RESULTS_PER_PAGE'], len(results))
                 split_results.append(results[i:end])
@@ -92,8 +91,7 @@ class Search:
         avg_len = get_average_word_count()
         doc_len = np.zeros(num_docs)
         for doc_id, idx in doc_id_to_idx.items():
-            doc_len[idx] = get_doc_word_count(
-                get_doc_word_count(doc_id)) / avg_len
+            doc_len[idx] = get_doc_word_count(doc_id) / avg_len
         doc_len = np.array(doc_len)
         k = self.cfg['BM25_COEFF']
         tf_matrix = np.zeros([num_docs, num_terms])
@@ -101,15 +99,17 @@ class Search:
             for d in p:
                 i = doc_id_to_idx[d.doc_id]
                 tf_matrix[i, j] = d.get_term_freq()
-        # TODO check whether this impl is right
-        tf_matrix = tf_matrix / (tf_matrix + .5 + k * doc_len[:, np.ones(num_terms)])
+        # DONE check whether this impl is right
+        # expand dim
+        doc_len_unsq = doc_len[:, None]
+        tf_matrix_scaled = tf_matrix / (tf_matrix + .5 + k * doc_len_unsq)
         
-        weights = tf_matrix * idf
+        weights = tf_matrix_scaled * idf
         weights = weights.sum(axis = 1)
         
         return weights
     
-    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method = 'BM25'):
+    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method = 'BM25') -> List[str]:
         '''
 
         :param posting_lists:
@@ -121,6 +121,7 @@ class Search:
         all_doc_ids = sorted(
             list(set([d.doc_id for p in posting_lists for d in p])))
         doc_id_to_idx = {doc_id: i for i, doc_id in enumerate(all_doc_ids)}
+        doc_idx_to_id = {i: doc_id for i, doc_id in enumerate(all_doc_ids)}
         if doc_id_to_idx:
             if method == 'BM25':
                 doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx, idf)
@@ -131,8 +132,8 @@ class Search:
             order = order.tolist()
         else:
             order = []
-        
-        return order
+        doc_id_ordered = [doc_idx_to_id[d_id] for d_id in order]
+        return doc_id_ordered
 
 
 if __name__ == "__main__":
@@ -140,7 +141,7 @@ if __name__ == "__main__":
     settings['cfg'] = get_config(args)
     s = Search(settings['cfg'])
     res = s.search({
-        'keyword': 'mage',
+        'keyword': 'physics heat',
         'pageNum': 2,
         'range': "",
         'category': ""
