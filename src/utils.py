@@ -112,9 +112,6 @@ def get_average_word_count():
 def get_doc_word_count(doc_id):
     """
 
-    Raises:
-        NotImplementedError: [description]
-
     Returns:
         [type] -- [description]
     """

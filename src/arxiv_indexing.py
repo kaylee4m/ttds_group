@@ -346,7 +346,6 @@ class BuildIndex:
 
 
 if __name__ == "__main__":
-    settings['doc_id_2_doc_no'] = {}
     doc_id2length = defaultdict(int)
     
     args = args_build_index()

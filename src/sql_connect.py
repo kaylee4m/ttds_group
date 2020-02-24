@@ -36,7 +36,7 @@ def get_doc(doc_id):
     conn, curr = getDB(db_config)
     id = "\'" + doc_id + "\'"
     sql = "SELECT * FROM arxiv WHERE id = %s" % (id)
-    print(sql)
+    # print(sql)
     try:
         curr.execute(sql)
         results = curr.fetchall()
