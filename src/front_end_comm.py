@@ -14,7 +14,7 @@ def start_server():
     :return:
     """
     settings['auto_complete'] = init_ac_fac()
-    settings['search_engine'] = Search.search
+    settings['search_engine'] = Search().search
 
 
 def deal_request():
