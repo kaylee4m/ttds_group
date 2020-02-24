@@ -10,9 +10,14 @@ from query_suggest import init_ac_fac
 
 def start_server():
     """
-    Initialize everything
+    Initialize search engine and autocomplete
     :return:
     """
+    settings['auto_complete'] = init_ac_fac()
+    settings['search_engine'] = Search.search
+
+
+def deal_request():
     pass
 
 
