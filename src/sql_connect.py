@@ -21,7 +21,7 @@ def getDB(db_config):
         return None, None
 
 
-def get_doc(doc_id):
+def get_doc(doc_id_list):
     """ Get document meta info from database"""
     db_config = {
         'host': '127.0.0.1',
@@ -31,11 +31,16 @@ def get_doc(doc_id):
         'db': 'ttds',
         'charset': 'utf8'
     }
+    dic_list = []
     dic = {}
+    id = ''
     warnings.filterwarnings("ignore")
-    conn, curr = getDB(db_config)
-    id = "\'" + doc_id + "\'"
-    sql = "SELECT * FROM arxiv WHERE id = %s" % (id)
+    conn,curr = getDB(db_config)
+    for doc_id in doc_id_list:
+        ID = "\'"+doc_id+"\'"
+        id = id + ID + ','
+    id = id[:-1]
+    sql = "SELECT * FROM arxiv WHERE id IN (%s)" %(id)
     print(sql)
     try:
         curr.execute(sql)
@@ -52,10 +57,12 @@ def get_doc(doc_id):
             dic['report-no'] = r[8]
             dic['categories'] = r[9]
             dic['versions'] = r[10]
+            dic_list.append(dic)
+            dic = {}
     except:
         print('Error:unable to find the data!')
     conn.close()
-    return dic
+    return dic_list
 
 
 def get_citations(article: dict):
