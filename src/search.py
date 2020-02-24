@@ -38,7 +38,7 @@ class Search:
         if key not in self.searched_results:
             # TODO see if prepro is used correctly
             words = preprocessing(
-                self.stemmer, q['keyword'].split(), self.stopwords)
+                self.stemmer, q['keyword'], self.stopwords)
             ori_pls = [get_posting_list(w) for w in words]
             total_docs = get_doc_numbers()
             df = [p.get_doc_freq() for p in ori_pls]

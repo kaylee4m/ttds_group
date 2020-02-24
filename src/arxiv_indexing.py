@@ -27,6 +27,7 @@ class PostingElement:
         self.parent = par
         self.doc_id = doc_id
         self.author = author
+        self.num_pos = 0
         self.positions = []
 
     def get_term_freq(self):
@@ -44,6 +45,7 @@ class PostingElement:
             pos {int} -- [description]
         """
 
+        self.num_pos += 1
         self.positions.append(pos)
 
     def __hash__(self):
@@ -262,6 +264,7 @@ def preprocessing(stemmer, content, stop_words):
     # TODO: Dont filter out words with punctuations, deal with it
     cleaned_list = []
     pattern = '[^a-zA-Z0-9\-\ ]'
+    content = contractions.fix(content, slang=False)
     content_str = re.sub(pattern, ' ', content).lower()
     tokens_list = nltk.word_tokenize(content_str)
     for token in tokens_list:
@@ -269,6 +272,7 @@ def preprocessing(stemmer, content, stop_words):
             token = stemmer.stem(token)
             cleaned_list.append(token)
     return cleaned_list
+
 
 class BuildIndex:
     def __init__(self, cfg):
@@ -286,15 +290,14 @@ class BuildIndex:
         categories = article['categories']
         abstract = article['abstract']
         authors = article['authors']
-        author_processed = preprocessing(stemmer, authors.split(), stop_words)
+        author_processed = preprocessing(stemmer, authors, stop_words)
         # DONE: combine title, author and content %finished
         # use get_doc_year to get year from doc id,
         # before add year into index, make it special by using get_sp_term. "08" -> "#08"
         # use get_cat_tag to get special term for category
 
-        content_fixed = contractions.fix(
-            authors + title + abstract, slang=False)#preprocessing function changed,please check this part
-        cleaned_words = preprocessing(stemmer, content_fixed, stop_words)
+        content = authors + title + abstract
+        cleaned_words = preprocessing(stemmer, content, stop_words)
 
         for pos, word in enumerate(cleaned_words):
             pl: PostingList = get_posting_list(word)
