@@ -65,11 +65,11 @@ def get_doc(doc_id_list):
     return dic_list
 
 
-def get_citations(article: dict):
+def get_citations(article):
     """Get the citation numbers from google scholar using scholarly and match the given paper with searched results"""
     title = article['title']
     num_of_citation = 0
-    keyword = title.replace('\n', '')  # take out '\n' in titles
+    keyword = title.replace('\n', ' ')  # take out '\n' in titles
     keyword = keyword.replace(' ', '+')  # replace space with +
     url = 'https://scholar.google.com/scholar?&hl=en&q=' + keyword + '&btnG=&lr='
     header_dict = {'Host': 'scholar.google.com',
