@@ -1,5 +1,4 @@
 # ─── CONVERT JSON DATA INTO SQL FOR FAST RETRIVAL ───────────────────────────────
-import scholarly
 import MySQLdb
 import warnings
 import urllib.parse
@@ -57,6 +56,7 @@ def get_doc(doc_id_list):
             dic['report-no'] = r[8]
             dic['categories'] = r[9]
             dic['versions'] = r[10]
+            dic['citations'] = get_citations(r[3])
             meta_dic[r[0]] = dic
             dic = {}
     except:
