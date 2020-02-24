@@ -1,3 +1,4 @@
+import re
 import gzip
 import json
 import pickle
@@ -15,11 +16,13 @@ ps = PorterStemmer()
 
 def preprocessing(stemmer, content, stop_words):
     cleaned_list = []
-    for i in content:
-        i = i.lower()
-        if i.isalpha() and i not in stop_words:
-            i = stemmer.stem(i)
-            cleaned_list.append(i)
+    pattern = '[^a-zA-Z0-9\-\ ]'
+    content_str = re.sub(pattern, ' ', content).lower()
+    tokens_list = nltk.word_tokenize(content_str)
+    for token in tokens_list:
+        if token not in stop_words:
+            token = stemmer.stem(token)
+            cleaned_list.append(token)
     return cleaned_list
 
 
@@ -36,7 +39,7 @@ with gzip.open(gz_file, 'rt', encoding='utf-8') as fin:
         categories = article['categories']
         abstract = article['abstract']
         authors = article['authors']
-        content = nltk.word_tokenize(authors+title+abstract)
+        content = authors+title+abstract
         cleaned_words = preprocessing(ps, content, stop_words)
         str_content = " ".join(cleaned_words)
 

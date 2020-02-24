@@ -291,15 +291,11 @@ class BuildIndex:
         # use get_doc_year to get year from doc id,
         # before add year into index, make it special by using get_sp_term. "08" -> "#08"
         # use get_cat_tag to get special term for category
-<<<<<<< HEAD
-        content = authors+title+abstract
-        cleaned_words = preprocessing(content, stop_words, stemmer)
-=======
+
         content_fixed = contractions.fix(
-            authors + title + abstract, slang=False)
-        content = nltk.word_tokenize(content_fixed)
-        cleaned_words = preprocessing(stemmer, content, stop_words)
->>>>>>> 2dd81d01f0e82540cdf1c835e3e3069242483283
+            authors + title + abstract, slang=False)#preprocessing function changed,please check this part
+        cleaned_words = preprocessing(stemmer, content_fixed, stop_words)
+
         for pos, word in enumerate(cleaned_words):
             pl: PostingList = get_posting_list(word)
             doc_posting: PostingElement = pl.get_doc_posting(
