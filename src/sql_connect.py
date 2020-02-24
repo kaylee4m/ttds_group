@@ -31,7 +31,7 @@ def get_doc(doc_id_list):
         'db': 'ttds',
         'charset': 'utf8'
     }
-    dic_list = []
+    meta_dic = {}
     dic = {}
     id = ''
     warnings.filterwarnings("ignore")
@@ -57,12 +57,12 @@ def get_doc(doc_id_list):
             dic['report-no'] = r[8]
             dic['categories'] = r[9]
             dic['versions'] = r[10]
-            dic_list.append(dic)
+            meta_dic[r[0]] = dic
             dic = {}
     except:
         print('Error:unable to find the data!')
     conn.close()
-    return dic_list
+    return meta_dic
 
 
 def get_citations(article):
