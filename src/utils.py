@@ -5,7 +5,7 @@ import os
 from global_settings import settings
 
 
-def createFolder(name, logfile=None):
+def createFolder(name, logfile = None):
     name = name.strip().rstrip("/")
     exist = os.path.exists(name)
     if exist:
@@ -32,12 +32,12 @@ def args_build_index():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg",
-                        default='config.yaml', required=False)
-
+                        default = 'config.yaml', required = False)
+    
     return parser.parse_args()
 
 
-def get_sp_term(term, sp="#"):
+def get_sp_term(term, sp = "#"):
     return sp + term
 
 
@@ -50,7 +50,7 @@ def get_doc_year(doc_id: str) -> str:
     return year
 
 
-def get_cat_tag(cat, sp="#"):
+def get_cat_tag(cat, sp = "#"):
     return get_sp_term(cat.upper(), sp)
 
 
@@ -87,7 +87,7 @@ def get_str_doc_id(doc_id: int) -> str:
                 settings['doc_id_2_doc_no'] = json.load(f)
         settings['doc_no_2_doc_id'] = {
             v: k for k, v in settings['doc_id_2_doc_no'].items()}
-
+    
     return settings['doc_no_2_doc_id'][doc_id]
 
 
@@ -133,12 +133,13 @@ def get_index_file_path(key):
 
 def get_word_occurences(word):
     if not len(settings['unigram']):
-        with open('res/all_ngrams.json', 'r') as f:
+        with open(settings['cfg']['UNIGRAM_FILE'], 'r') as f:
             settings['unigram'] = json.load(f)
     if word in settings['unigram']:
         return settings['unigram'][word][2]
-    else :
+    else:
         return 0
+
 
 def v_byte_encode(n: int) -> bytearray:
     """Apply variable byte length compression to a number

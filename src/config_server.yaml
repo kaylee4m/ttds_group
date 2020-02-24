@@ -3,7 +3,8 @@
 
 # Source data
 DATA_DIR: ""
-ALL_DATA: "/home/ubuntu/arx_prj/dataset/arxiv-metadata-oai-2020-02-11.json.gz"
+#ALL_DATA: "/home/ubuntu/arx_prj/dataset/arxiv-metadata-oai-2020-02-11.json.gz"
+ALL_DATA: "/home/ubuntu/arx_prj/dataset/arxiv-metadata-oai-sample.gz"
 DEV_SET: ""
 TRAIN_SET: ""
 VALIDATION_SET: ""
@@ -13,8 +14,8 @@ TEST_SET: ""
 INDEX_DIR: "se_index/"
 INDEX_PREFIX: "sample"
 CAT_ABBR_DICT: "res/cat_abbr_full.txt"
-INDEX_CACHE_SIZE: 50
-NUM_INDEX_FILES: 200
+INDEX_CACHE_SIZE: 100
+NUM_INDEX_FILES: 5 # per key group
 DOC_ID_2_DOC_NO: "res/DOC_ID_2_DOC_NO.json" # path to the mapping containing doc_id(str) to doc id (int)
 DOC_ID_2_DOC_LEN: "res/DOC_ID_2_DOC_LEN.json" # path to the mapping containing doc_id(str) to doc length(int)
 
@@ -34,4 +35,4 @@ ALL_NGRAMS_FILE: "res/all_ngrams.json"
 CAT_SPLIT_SYMB: ","
 
 # debug
-DEBUG_PRINT: False
+DEBUG_PRINT: True
