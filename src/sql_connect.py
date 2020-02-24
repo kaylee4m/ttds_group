@@ -21,7 +21,7 @@ def getDB(db_config):
         return None, None
 
 
-def get_doc(doc_id):
+def get_doc(doc_id_list):
     """ Get document meta info from database"""
     db_config = {
         'host': '127.0.0.1',
@@ -31,12 +31,17 @@ def get_doc(doc_id):
         'db': 'ttds',
         'charset': 'utf8'
     }
+    meta_dic = {}
     dic = {}
+    id = ''
     warnings.filterwarnings("ignore")
-    conn, curr = getDB(db_config)
-    id = "\'" + doc_id + "\'"
-    sql = "SELECT * FROM arxiv WHERE id = %s" % (id)
-    # print(sql)
+    conn,curr = getDB(db_config)
+    for doc_id in doc_id_list:
+        ID = "\'"+doc_id+"\'"
+        id = id + ID + ','
+    id = id[:-1]
+    sql = "SELECT * FROM arxiv WHERE id IN (%s)" %(id)
+    print(sql)
     try:
         curr.execute(sql)
         results = curr.fetchall()
@@ -52,17 +57,19 @@ def get_doc(doc_id):
             dic['report-no'] = r[8]
             dic['categories'] = r[9]
             dic['versions'] = r[10]
+            meta_dic[r[0]] = dic
+            dic = {}
     except:
         print('Error:unable to find the data!')
     conn.close()
-    return dic
+    return meta_dic
 
 
-def get_citations(article: dict):
+def get_citations(article):
     """Get the citation numbers from google scholar using scholarly and match the given paper with searched results"""
     title = article['title']
     num_of_citation = 0
-    keyword = title.replace('\n', '')  # take out '\n' in titles
+    keyword = title.replace('\n', ' ')  # take out '\n' in titles
     keyword = keyword.replace(' ', '+')  # replace space with +
     url = 'https://scholar.google.com/scholar?&hl=en&q=' + keyword + '&btnG=&lr='
     header_dict = {'Host': 'scholar.google.com',
