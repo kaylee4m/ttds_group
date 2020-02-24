@@ -68,7 +68,7 @@ def get_doc(doc_id_list):
 def get_citations(title):
     """Get the citation numbers from google scholar using scholarly and match the given paper with searched results"""
     num_of_citation = 0
-    keyword = title.replace('\n','')#take out '\n' in titles
+    keyword = title.replace('\n',' ')#take out '\n' in titles
     keyword = keyword.replace(' ','+')#replace space with +
     url='https://scholar.google.com/scholar?&hl=en&q='+keyword+'&btnG=&lr='
     header_dict={'Host': 'scholar.google.com',
