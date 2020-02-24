@@ -2,3 +2,7 @@ scholarly
 flask
 cachetools 
 pyyaml
+fast-autocomplete
+contractions
+nltk
+
