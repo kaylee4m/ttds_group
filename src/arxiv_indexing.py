@@ -3,6 +3,7 @@ import json
 import pickle
 import tqdm
 import nltk
+import re
 from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
@@ -232,13 +233,14 @@ def save_posting_list_group(key: str, pl_group: Dict):
 
 def preprocessing(stemmer, content, stop_words):
     cleaned_list = []
-    for i in content:
-        i = i.lower()
-        if i.isalpha() and i not in stop_words:
-            i = stemmer.stem(i)
-            cleaned_list.append(i)
+    pattern = '[^a-zA-Z0-9\-\ ]'
+    content_str = re.sub(pattern, ' ', content).lower()
+    tokens_list = nltk.word_tokenize(content_str)
+    for token in tokens_list:
+        if token not in stop_words:
+            token = stemmer.stem(token)
+            cleaned_list.append(token)
     return cleaned_list
-
 
 class BuildIndex:
     def __init__(self, cfg):
@@ -261,7 +263,7 @@ class BuildIndex:
         # use get_doc_year to get year from doc id,
         # before add year into index, make it special by using get_sp_term. "08" -> "#08"
         # use get_cat_tag to get special term for category
-        content = nltk.word_tokenize(authors+title + abstract)
+        content = authors+title+abstract
         cleaned_words = preprocessing(content, stop_words, stemmer)
         for pos, word in enumerate(cleaned_words):
             pl: PostingList = get_posting_list(
