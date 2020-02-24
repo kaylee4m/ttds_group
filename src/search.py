@@ -20,8 +20,8 @@ class Search:
         self.stemmer = nltk.stem.PorterStemmer()
         self.searched_results = LRUCache(
             self.cfg['SEARCH_CACHE_SIZE'])  # cached dictionary
-    
-    def search(self, q, query_type = None, ):
+
+    def search(self, q, query_type=None, ):
         """Search by query
             pageNum should start from 1
         Arguments:
@@ -37,11 +37,13 @@ class Search:
         key = q['keyword'] + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
             # TODO see if prepro is used correctly
-            words = preprocessing(self.stemmer, q['keyword'].split(), self.stopwords)
+            words = preprocessing(
+                self.stemmer, q['keyword'].split(), self.stopwords)
             ori_pls = [get_posting_list(w) for w in words]
             total_docs = get_doc_numbers()
             df = [p.get_doc_freq() for p in ori_pls]
-            pls: List[List[PostingElement]] = [p.get_postings(q['range']) for p in ori_pls]
+            pls: List[List[PostingElement]] = [
+                p.get_postings(q['range']) for p in ori_pls]
             # DONE: Filter categories. pls should be List[List[PostingElement]]
             # Assume categories are abbreviation
             if q['category']:
@@ -49,7 +51,8 @@ class Search:
                     self.cfg['CAT_SPLIT_SYMB'])]
                 cat_pls = [get_posting_list(c).get_postings(
                     q['range']) for c in cats]
-                cat_pl_set: Set[PostingElement] = reduce(set.union, [set(p) for p in cat_pls])
+                cat_pl_set: Set[PostingElement] = reduce(
+                    set.union, [set(p) for p in cat_pls])
                 pls = self.boolean_search(pls, cat_pl_set)
                 # if a term does not appear in a specific category, no need to search among these
             df = [df[i] for i, p in enumerate(pls) if p]
@@ -58,17 +61,21 @@ class Search:
             idf = np.log10((total_docs - df + .5) / (df + .5))
             # Search the rest posting lists
             doc_ids = self.ranked_search(pls, idf)
-            results = [get_doc(d_id) for d_id in doc_ids]
-            # split results into pages
+            # split into pages
             i = 0
             split_results = [[]]  # 0 for no results, page number starts from 1
-            while i < len(results):
-                end = min(i + self.cfg['SEARCH_RESULTS_PER_PAGE'], len(results))
-                split_results.append(results[i:end])
+            while i < len(doc_ids):
+                end = min(
+                    i + self.cfg['SEARCH_RESULTS_PER_PAGE'], len(doc_ids))
+                split_results.append(doc_ids[i:end])
                 i += self.cfg['SEARCH_RESULTS_PER_PAGE']
             self.searched_results[key] = split_results
-        return self.searched_results[key][q['pageNum']]
-    
+        if q['pageNum'] > len(split_results):
+            q['pageNum'] == 0
+        results = get_doc(self.searched_results[key][q['pageNum']])
+        total_pages = len(self.searched_results[key])-1
+        return results
+
     def boolean_search(self, candidate: List[List[PostingElement]],
                        must_in: Set[PostingElement]) -> List[List[PostingElement]]:
         """Cast boolean search on candidate. Filter our those not in must_in
@@ -84,7 +91,7 @@ class Search:
         for pl in candidate:
             result.append([ele for ele in pl if ele.doc_id in docs_must_in])
         return candidate
-    
+
     def get_BM25_score(self, posting_lists: List[List[PostingElement]], doc_id_to_idx, idf):
         num_terms = len(posting_lists)
         num_docs = len(doc_id_to_idx)
@@ -103,13 +110,13 @@ class Search:
         # expand dim
         doc_len_unsq = doc_len[:, None]
         tf_matrix_scaled = tf_matrix / (tf_matrix + .5 + k * doc_len_unsq)
-        
+
         weights = tf_matrix_scaled * idf
-        weights = weights.sum(axis = 1)
-        
+        weights = weights.sum(axis=1)
+
         return weights
-    
-    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method = 'BM25') -> List[str]:
+
+    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method='BM25') -> List[str]:
         '''
 
         :param posting_lists:
@@ -124,9 +131,11 @@ class Search:
         doc_idx_to_id = {i: doc_id for i, doc_id in enumerate(all_doc_ids)}
         if doc_id_to_idx:
             if method == 'BM25':
-                doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx, idf)
+                doc_score = self.get_BM25_score(
+                    posting_lists, doc_id_to_idx, idf)
             else:
-                doc_score = self.get_BM25_score(posting_lists, doc_id_to_idx, idf)
+                doc_score = self.get_BM25_score(
+                    posting_lists, doc_id_to_idx, idf)
             keep = min(len(all_doc_ids), self.cfg["SEARCH_RESULTS_KEEP"])
             order = np.argsort(doc_score)[::-1][:keep]
             order = order.tolist()
