@@ -36,7 +36,7 @@ ALL_NGRAMS_FILE: "res/all_ngrams.json"
 CAT_SPLIT_SYMB: ","
 
 # debug
-DEBUG_PRINT: True
+DEBUG_PRINT: False
 
 # Run
 RUN_SERVER: True

@@ -3,6 +3,7 @@ import yaml
 import json
 import os
 from global_settings import settings
+from typing import List
 
 
 def createFolder(name, logfile = None):
@@ -157,7 +158,7 @@ def v_byte_encode(n: int) -> bytearray:
     return b
 
 
-def v_byte_decode(bytestream: bytearray) -> int:
+def v_byte_decode(bytestream: bytearray) -> List[int]:
     nums = []
     n = 0
     for i, b in enumerate(bytestream):

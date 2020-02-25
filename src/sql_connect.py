@@ -4,7 +4,10 @@ import warnings
 import urllib.parse
 import urllib.request
 import re
-#from fake_useragent import UserAgent
+from global_settings import settings
+
+
+# from fake_useragent import UserAgent
 
 def getDB(db_config):
     try:
@@ -33,7 +36,7 @@ def get_doc(doc_id_list):
     meta_dic = {}
     dic = {}
     id = ''
-    if 0 == len( doc_id_list ):#check if list is empty
+    if 0 == len(doc_id_list):  # check if list is empty
         return meta_dic
     warnings.filterwarnings("ignore")
     conn, curr = getDB(db_config)
@@ -42,7 +45,8 @@ def get_doc(doc_id_list):
         id = id + ID + ','
     id = id[:-1]
     sql = "SELECT * FROM arxiv WHERE id IN (%s)" % (id)
-    print(sql)
+    if settings['cfg']['DEBUG_PRINT']:
+        print(sql)
     try:
         curr.execute(sql)
         results = curr.fetchall()
@@ -79,20 +83,20 @@ def get_citations(title):
     num_of_citation = 0
     keyword = title.replace('\n', ' ')  # take out '\n' in titles
     keyword = keyword.replace(' ', '+')  # replace space with +
-    #proxy_ip = [{"http":"85.198.250.135:3128"}]
-    #ua = UserAgent()
-    url='https://scholar.google.com/scholar?&hl=en&q='+keyword+'&btnG=&lr='
-    header_dict={'Host': 'scholar.google.com',
-            #'User-Agent': ua.random,
-             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
-             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-             'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-             'Referer': 'https://scholar.google.com/schhp?hl=zh-CN',
-             'Connection': 'keep-alive'}
-    req = urllib.request.Request(url=url, headers = header_dict, method = 'GET')
-    #proxy = urllib.request.ProxyHandler(proxy_ip[0])
-    #opener = urllib.request.build_opener(proxy,urllib.request.HTTPHandler)
-    #urllib.request.install_opener(opener)
+    # proxy_ip = [{"http":"85.198.250.135:3128"}]
+    # ua = UserAgent()
+    url = 'https://scholar.google.com/scholar?&hl=en&q=' + keyword + '&btnG=&lr='
+    header_dict = {'Host': 'scholar.google.com',
+                   # 'User-Agent': ua.random,
+                   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+                   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                   'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+                   'Referer': 'https://scholar.google.com/schhp?hl=zh-CN',
+                   'Connection': 'keep-alive'}
+    req = urllib.request.Request(url = url, headers = header_dict, method = 'GET')
+    # proxy = urllib.request.ProxyHandler(proxy_ip[0])
+    # opener = urllib.request.build_opener(proxy,urllib.request.HTTPHandler)
+    # urllib.request.install_opener(opener)
     response = urllib.request.urlopen(req, timeout = 120)
     # if response.status == 200:
     #     print('connect to google scholar succesfully.')

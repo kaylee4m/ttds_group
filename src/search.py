@@ -72,15 +72,16 @@ class Search:
             self.searched_results[key] = split_results
         if q['pageNum'] >= len(self.searched_results[key]) - 1:
             q['pageNum'] = 0
-        # print(key, self.searched_results[key], q['pageNum'])
+        if self.cfg['DEBUG_PRINT']:
+            print(key, self.searched_results[key], q['pageNum'])
         doc_list = self.searched_results[key][q['pageNum']]
         if self.cfg['RUN_SERVER']:
-
             results = get_doc(doc_list)
+            return {k: results[k] for k in doc_list}
         else:
-            results =str (self.searched_results[key][q['pageNum']])
-        total_pages = len(self.searched_results[key]) - 1
-        return {k: results[k] for k in doc_list}
+            results = str(self.searched_results[key][q['pageNum']])
+            return results
+        # total_pages = len(self.searched_results[key]) - 1
     
     def boolean_search(self, candidate: List[List[PostingElement]],
                        must_in: Set[PostingElement]) -> List[List[PostingElement]]:

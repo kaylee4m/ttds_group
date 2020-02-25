@@ -34,15 +34,20 @@ def start_server():
 def deal_request():
     # name = request.args.get("name", "World")
     #
-    search_type = settings['request_type']
-    start, end = request.args.get('startYear', 1990), request.args.get('endYear', 2020)
-    
-    res = settings['search_engine']({
-        'keyword': request.args.get('key', ''),
-        'pageNum': int(request.args.get('pageNum', 1)),
-        'range': "%s-%s" % (start, end),
-        'category': request.args.get('category', '')
-    })
+    if settings['cfg']['DEBUG_PRINT']:
+        print(request.args)
+    search_type = request.args.get('request_type', 'search')
+    if search_type == 'search':
+        start, end = request.args.get('startYear', 1990), request.args.get('endYear', 2020)
+        res = settings['search_engine']({
+            'keyword': request.args.get('key', ''),
+            'pageNum': int(request.args.get('pageNum', 1)),
+            'range': "%s-%s" % (start, end),
+            'category': request.args.get('category', '')
+        })
+    else:
+        # autocomplete
+        res = "AC"
     return res
 
 

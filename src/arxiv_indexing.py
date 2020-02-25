@@ -66,7 +66,6 @@ class PostingList:
         # DONE: TO be decided whether we use a list or a binary tree
         self.doc_ids = {}  # doc_id: idx in list
         self.doc_list = []
-        # raise NotImplementedError
 
     def get_doc_posting(self, article, authors) -> PostingElement:
         """If a doc is recorded, return it; if not, create the postingElement for it and return it
@@ -77,12 +76,12 @@ class PostingList:
         Returns:
             [type] -- [description]
         """
-        self.doc_id = article['id']
-        if self.doc_id not in self.doc_ids:
+        doc_id = article['id']
+        if doc_id not in self.doc_ids:
             is_author = self.term in authors
             self.add_doc_ele(PostingElement(
-                self, self.doc_id, author=is_author))
-        return self.doc_list[self.doc_ids[self.doc_id]]
+                self, doc_id, author=is_author))
+        return self.doc_list[self.doc_ids[doc_id]]
 
     def add_doc_ele(self, doc_ele: PostingElement):
         # ideally doc id is inserted ascendingly
