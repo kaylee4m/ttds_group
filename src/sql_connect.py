@@ -56,14 +56,14 @@ def get_doc(doc_id_list):
             dic['report-no'] = r[8]
             dic['categories'] = r[9]
             dic['versions'] = r[10]
-            try:
-                num_cite = get_citations(r[3])
-                if num_cite <= 0:
-                    dic['citations'] = '0'
-                else:
-                    dic['citations'] = str(num_cite)
-            except Exception as cite_e:
-                print(cite_e)
+            # try:
+            #     num_cite = get_citations(r[3])
+            #     if num_cite <= 0:
+            #         dic['citations'] = '0'
+            #     else:
+            #         dic['citations'] = str(num_cite)
+            # except Exception as cite_e:
+            #     print(cite_e)
             meta_dic[r[0]] = dic
             dic = {}
     except Exception as e:
