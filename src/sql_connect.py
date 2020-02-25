@@ -33,6 +33,8 @@ def get_doc(doc_id_list):
     meta_dic = {}
     dic = {}
     id = ''
+    if 0 == len( doc_id_list ):#check if list is empty
+        return meta_dic
     warnings.filterwarnings("ignore")
     conn, curr = getDB(db_config)
     for doc_id in doc_id_list:
