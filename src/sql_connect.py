@@ -80,10 +80,11 @@ def get_citations(title):
     keyword = title.replace('\n', ' ')  # take out '\n' in titles
     keyword = keyword.replace(' ', '+')  # replace space with +
     #proxy_ip = [{"http":"85.198.250.135:3128"}]
-    ua = UserAgent()
+    #ua = UserAgent()
     url='https://scholar.google.com/scholar?&hl=en&q='+keyword+'&btnG=&lr='
     header_dict={'Host': 'scholar.google.com',
-            'User-Agent': ua.random,
+            #'User-Agent': ua.random,
+             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
              'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
              'Referer': 'https://scholar.google.com/schhp?hl=zh-CN',
