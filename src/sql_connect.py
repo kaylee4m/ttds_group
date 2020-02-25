@@ -4,7 +4,7 @@ import warnings
 import urllib.parse
 import urllib.request
 import re
-
+#from fake_useragent import UserAgent
 
 def getDB(db_config):
     try:
@@ -79,14 +79,19 @@ def get_citations(title):
     num_of_citation = 0
     keyword = title.replace('\n', ' ')  # take out '\n' in titles
     keyword = keyword.replace(' ', '+')  # replace space with +
-    url = 'https://scholar.google.com/scholar?&hl=en&q=' + keyword + '&btnG=&lr='
-    header_dict = {'Host': 'scholar.google.com',
-                   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0',
-                   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                   'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-                   'Referer': 'https://scholar.google.com/schhp?hl=zh-CN',
-                   'Connection': 'keep-alive'}
-    req = urllib.request.Request(url = url, headers = header_dict, method = 'GET')
+    #proxy_ip = [{"http":"85.198.250.135:3128"}]
+    ua = UserAgent()
+    url='https://scholar.google.com/scholar?&hl=en&q='+keyword+'&btnG=&lr='
+    header_dict={'Host': 'scholar.google.com',
+            'User-Agent': ua.random,
+             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+             'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+             'Referer': 'https://scholar.google.com/schhp?hl=zh-CN',
+             'Connection': 'keep-alive'}
+    req = urllib.request.Request(url=url, headers = header_dict, method = 'GET')
+    #proxy = urllib.request.ProxyHandler(proxy_ip[0])
+    #opener = urllib.request.build_opener(proxy,urllib.request.HTTPHandler)
+    #urllib.request.install_opener(opener)
     response = urllib.request.urlopen(req, timeout = 120)
     # if response.status == 200:
     #     print('connect to google scholar succesfully.')
