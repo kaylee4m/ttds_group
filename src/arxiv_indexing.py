@@ -159,13 +159,13 @@ class PostingList:
             start = int(year_range[:4])
             end = int(year_range[5:])
             if start < 2000:
-                condition = ["%2d" % (i - 1900) for i in range(start, 2000)] + \
-                            ["%2d" % (i - 2000) for i in range(2000, end + 1)]
+                condition = set(["%02d" % (i - 1900) for i in range(start, 2000)] + \
+                                ["%02d" % (i - 2000) for i in range(2000, end + 1)])
             else:
-                condition = ["%2d" % (i - 2000) for i in range(start, end + 1)]
+                condition = set(["%02d" % (i - 2000) for i in range(start, end + 1)])
             
-            filtered_posting = [element for element in self.doc_list if int(
-                get_doc_year(element.doc_id)) in condition]
+            filtered_posting = [element for element in self.doc_list if
+                                get_doc_year(element.doc_id) in condition]
             return filtered_posting
     
     def get_doc_freq(self):

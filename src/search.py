@@ -20,8 +20,8 @@ class Search:
         self.stemmer = nltk.stem.PorterStemmer()
         self.searched_results = LRUCache(
             self.cfg['SEARCH_CACHE_SIZE'])  # cached dictionary
-
-    def search(self, q, query_type=None, ):
+    
+    def search(self, q, query_type = None, ):
         """Search by query
             pageNum should start from 1
         Arguments:
@@ -70,12 +70,16 @@ class Search:
                 split_results.append(doc_ids[i:end])
                 i += self.cfg['SEARCH_RESULTS_PER_PAGE']
             self.searched_results[key] = split_results
-        if q['pageNum'] > len(self.searched_results[key]):
-            q['pageNum'] == 0
-        results = get_doc(self.searched_results[key][q['pageNum']])
-        total_pages = len(self.searched_results[key])-1
-        return results
-
+        if q['pageNum'] >= len(self.searched_results[key]) - 1:
+            q['pageNum'] = 0
+        # print(key, self.searched_results[key], q['pageNum'])
+        doc_list = self.searched_results[key][q['pageNum']]
+        results = get_doc(doc_list)
+        
+        # results =str (self.searched_results[key][q['pageNum']])
+        total_pages = len(self.searched_results[key]) - 1
+        return {k: results[k] for k in doc_list}
+    
     def boolean_search(self, candidate: List[List[PostingElement]],
                        must_in: Set[PostingElement]) -> List[List[PostingElement]]:
         """Cast boolean search on candidate. Filter our those not in must_in
@@ -91,7 +95,7 @@ class Search:
         for pl in candidate:
             result.append([ele for ele in pl if ele.doc_id in docs_must_in])
         return candidate
-
+    
     def get_BM25_score(self, posting_lists: List[List[PostingElement]], doc_id_to_idx, idf):
         num_terms = len(posting_lists)
         num_docs = len(doc_id_to_idx)
@@ -110,13 +114,13 @@ class Search:
         # expand dim
         doc_len_unsq = doc_len[:, None]
         tf_matrix_scaled = tf_matrix / (tf_matrix + .5 + k * doc_len_unsq)
-
+        
         weights = tf_matrix_scaled * idf
-        weights = weights.sum(axis=1)
-
+        weights = weights.sum(axis = 1)
+        
         return weights
-
-    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method='BM25') -> List[str]:
+    
+    def ranked_search(self, posting_lists: List[List[PostingElement]], idf, method = 'BM25') -> List[str]:
         '''
 
         :param posting_lists:
@@ -150,9 +154,9 @@ if __name__ == "__main__":
     settings['cfg'] = get_config(args)
     s = Search(settings['cfg'])
     res = s.search({
-        'keyword': 'physics heat',
+        'keyword': 'hot',
         'pageNum': 2,
-        'range': "",
+        'range': "1990-2020",
         'category': ""
     })
     print(res)
