@@ -18,7 +18,7 @@ def init_ac_fac():
 
     content_files = {
         'words': {
-            'filepath': cfg['ALL_NGRAMS_FILE'],
+            'filepath': cfg['UNIGRAM_FILE'],
             'compress': True  # means compress the graph data in memory
         }
     }

@@ -70,7 +70,7 @@ class Search:
                 split_results.append(doc_ids[i:end])
                 i += self.cfg['SEARCH_RESULTS_PER_PAGE']
             self.searched_results[key] = split_results
-        if q['pageNum'] > len(split_results):
+        if q['pageNum'] > len(self.searched_results[key]):
             q['pageNum'] == 0
         results = get_doc(self.searched_results[key][q['pageNum']])
         total_pages = len(self.searched_results[key])-1
