@@ -34,13 +34,14 @@ def start_server():
 def deal_request():
     # name = request.args.get("name", "World")
     #
+    key = request.args.get('key')
+    
     res = settings['search_engine']({
-        'keyword': 'physics heat',
-        'pageNum': 2,
+        'keyword': request.args.get('key', ''),
+        'pageNum': int(request.args.get('pageNum', 1)),
         'range': "",
-        'category': ""
+        'category': request.args.get('category', '')
     })
-    print(res)
     return res
 
 
