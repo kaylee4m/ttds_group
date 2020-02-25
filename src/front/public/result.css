@@ -1,3 +1,18 @@
+[v-cloak] {
+ 
+    display: none;
+
+}
+.search-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+.search-input {
+    height: 44px;
+    width: 50%;
+}
+
 .result-header {
     display: flex;
     height: 100px;
