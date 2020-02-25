@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Document</title>
+    <link rel="stylesheet"
+          href="./index.css">
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+    <link rel="stylesheet"
+          href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+
+<body>
+    <div class="container main"
+         id="main">
+        <img src="./logo.png"
+             alt="">
+        <div class="search-wrapper">
+            <el-autocomplete class="inline-input"
+                             v-model="key"
+                             :fetch-suggestions="getSuggestion"
+                             placeholder="请输入内容"
+                             :trigger-on-focus="false"
+                             style="width: 50%;"
+                             @select="handleSelect"></el-autocomplete>
+            <button type="button"
+                    class="btn btn-default btn-lg search-btn"
+                    @click="search">
+                <span class="glyphicon glyphicon-search blue"
+                      aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="slogan blue">
+            Without knowledge,all is in vain.
+        </div>
+    </div>
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <script src="./http.js"></script>
+    <script>
+        new Vue({
+            el: '#main',
+            data: function () {
+                return {
+                    key: ''
+                }
+            },
+            methods: {
+                search() {
+                    window.open('./result.html?key=' + this.key)
+                },
+                getSuggestion(queryString, cb) {
+                    if (queryString) {
+                        $http('/suggest', { key: queryString }).then(res => {
+                            cb(res.map(v => ({ value: v })))
+                        })
+                    }
+                },
+                handleSelect(value) {
+                    window.open('./result.html?key=' + value.value)
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
