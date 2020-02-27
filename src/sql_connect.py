@@ -62,6 +62,7 @@ def get_doc(doc_id_list):
             dic['report-no'] = r[8]
             dic['categories'] = r[9]
             dic['versions'] = r[10]
+            dic['pdf_link'] = 'https://arxiv.org/pdf/'+r[0]+'.pdf'
             # try:
             #     num_cite = get_citations(r[3])
             #     if num_cite <= 0:
