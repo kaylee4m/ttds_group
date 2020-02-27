@@ -33,14 +33,15 @@ TRIGRAM_FILE: "res/trigram.json"
 ALL_NGRAMS_FILE: "res/all_ngrams.json"
 UNIGRAM_FILE_FULL: "res/unigram_full.json"
 BIGRAM_FILE_FULL: "res/bigram_full.json"
-AC_DIC: "UNIGRAM_FILE_FULL"
+AC_DIC: "UNIGRAM_FILE"
 MAX_WORDS: 2
+SUGGESTION_NUMBER: 10
 
 # front end
 CAT_SPLIT_SYMB: ","
 
 # debug
-DEBUG_PRINT: False
+DEBUG_PRINT: True
 
 # Run
 RUN_SERVER: True

@@ -47,10 +47,11 @@ def deal_request():
         })
     else:
         # autocomplete, A list of str
-        res = auto_complete(request.args.get('key', ''))
-    return res
+        k = request.args.get('key', '')
+        res = auto_complete(k)
+    return str(res)
 
-
+# curl http://localhost:8081/?key=chris&request_type=autocomplete&pageNum=1&startYear=1990&endYear=2020
 if __name__ == "__main__":
     start_server()
     app.run(port = 8081)

@@ -35,6 +35,7 @@ UNIGRAM_FILE_FULL: "res/unigram_full.json" # len: 2265793,  # 3.6G
 BIGRAM_FILE_FULL: "res/bigram_full.json"
 AC_DIC: "ALL_NGRAMS_FILE"
 MAX_WORDS: 2
+SUGGESTION_NUMBER: 10
 
 # front end
 CAT_SPLIT_SYMB: ","

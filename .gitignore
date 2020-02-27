@@ -145,3 +145,4 @@ src/.DS_Store
 src/web/node_modules/
 src/res/unigram_full.json
 src/res/bigram_full.json
+src/big_over10.json

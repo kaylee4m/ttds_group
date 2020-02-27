@@ -16,8 +16,8 @@ def init_ac_fac():
     # with open('res/all_ngrams.json', 'w') as f:
     #     json.dump(settings['ngrams'],f)
     #
-    with open(cfg['BIGRAM_FILE_FULL'], 'r')  as f:
-        settings['unigram'].update(json.load(f))
+    # with open(cfg['BIGRAM_FILE_FULL'], 'r')  as f:
+    #     settings['unigram'].update(json.load(f))
     content_files = {
         'words': {
             'filepath': cfg[cfg['AC_DIC']],
@@ -33,7 +33,7 @@ def auto_complete(words):
     words = words.split()
     keep = min(3, len(words))
     words = ' '.join(words[-keep:])
-    results = settings['auto_complete'](words, size = settings['SEARCH_RESULTS_PER_PAGE'])
+    results = settings['auto_complete'](words,  settings['cfg']['SUGGESTION_NUMBER'])
     results = [sugg[0] for sugg in results]
     return results
 
