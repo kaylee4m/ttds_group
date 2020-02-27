@@ -4,7 +4,7 @@
 from flask import Flask, escape, request
 from search import Search
 from global_settings import settings
-from query_suggest import init_ac_fac
+from query_suggest import *
 from argparse import ArgumentParser
 from utils import get_config
 
@@ -46,11 +46,11 @@ def deal_request():
             'category': request.args.get('category', '')
         })
     else:
-        # autocomplete
-        res = "AC"
+        # autocomplete, A list of str
+        res = auto_complete(request.args.get('key', ''))
     return res
 
 
 if __name__ == "__main__":
     start_server()
-    app.run()
+    app.run(port = 8081)

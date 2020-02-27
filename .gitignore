@@ -143,3 +143,5 @@ src/res/DOC_ID_2_DOC_NO.json
 mysqlclient-1.4.6-cp37-cp37m-win_amd64.whl
 src/.DS_Store
 src/web/node_modules/
+src/res/unigram_full.json
+src/res/bigram_full.json
