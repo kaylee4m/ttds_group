@@ -70,18 +70,18 @@ class Search:
                 split_results.append(doc_ids[i:end])
                 i += self.cfg['SEARCH_RESULTS_PER_PAGE']
             self.searched_results[key] = split_results
-        if q['pageNum'] >= len(self.searched_results[key]) - 1:
+        if len(self.searched_results[key]) == 1:
             q['pageNum'] = 0
         if self.cfg['DEBUG_PRINT']:
             print(key, self.searched_results[key], q['pageNum'])
         doc_list = self.searched_results[key][q['pageNum']]
         if self.cfg['RUN_SERVER']:
             results = get_doc(doc_list)
-            return {k: results[k] for k in doc_list}
+            results =  {k: results[k] for k in doc_list}
         else:
             results = str(self.searched_results[key][q['pageNum']])
-            return results
-        # total_pages = len(self.searched_results[key]) - 1
+        return_dict = {"docs": results, "results": sum([len(d) for d in self.searched_results[key]])}
+        return return_dict
     
     def boolean_search(self, candidate: List[List[PostingElement]],
                        must_in: Set[PostingElement]) -> List[List[PostingElement]]:
@@ -97,7 +97,7 @@ class Search:
         result = []
         for pl in candidate:
             result.append([ele for ele in pl if ele.doc_id in docs_must_in])
-        return candidate
+        return result
     
     def get_BM25_score(self, posting_lists: List[List[PostingElement]], doc_id_to_idx, idf):
         num_terms = len(posting_lists)
@@ -157,9 +157,9 @@ if __name__ == "__main__":
     settings['cfg'] = get_config(args)
     s = Search(settings['cfg'])
     res = s.search({
-        'keyword': 'hot',
-        'pageNum': 2,
+        'keyword': 'deeper',
+        'pageNum': 1,
         'range': "1990-2020",
-        'category': ""
+        'category': "astro-ph"
     })
     print(res)

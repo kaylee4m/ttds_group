@@ -41,7 +41,7 @@ SUGGESTION_NUMBER: 10
 CAT_SPLIT_SYMB: ","
 
 # debug
-DEBUG_PRINT: True
+DEBUG_PRINT: False
 
 # Run
 RUN_SERVER: True

@@ -49,7 +49,7 @@ def deal_request():
         # autocomplete, A list of str
         k = request.args.get('key', '')
         res = auto_complete(k)
-    return str(res)
+    return json.dumps(res)
 
 # curl http://localhost:8081/?key=chris&request_type=autocomplete&pageNum=1&startYear=1990&endYear=2020
 if __name__ == "__main__":

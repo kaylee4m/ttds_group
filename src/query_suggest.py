@@ -33,22 +33,23 @@ def auto_complete(words):
     words = words.split()
     keep = min(3, len(words))
     words = ' '.join(words[-keep:])
-    results = settings['auto_complete'](words,  settings['cfg']['SUGGESTION_NUMBER'])
+    results = settings['auto_complete'](words, settings['cfg']['SUGGESTION_NUMBER'])
     results = [sugg[0] for sugg in results]
-    return results
+    return json.dumps(results)
 
 
 if __name__ == '__main__':
     args = args_build_index()
     settings['cfg'] = get_config(args)
     ac = init_ac_fac()
+    settings['auto_complete'] = ac
     start = time.time()
-    print(ac("thermo", 10))
+    print(auto_complete("thermo", ))
     print("Time %.4f" % (time.time() - start))
     start = time.time()
-    print(ac("graphics", 10))
+    print(auto_complete("graphics", ))
     print("Time %.4f" % (time.time() - start))
     
     start = time.time()
-    print(ac("chris", 10))
+    print(auto_complete("chris poi", ))
     print("Time %.4f" % (time.time() - start))
