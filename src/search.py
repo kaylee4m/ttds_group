@@ -160,10 +160,11 @@ if __name__ == "__main__":
     args = args_build_index()
     settings['cfg'] = get_config(args)
     s = Search(settings['cfg'])
+    kwd='A Practical Guide for the Effective Evaluation'
     res = s.search({
-        'keyword': 'A Practical Guide for the Effective Evaluation',
+        'keyword': 'hot pot rocks',
         'pageNum': 1,
-        'range': "2008-2020",
+        'range': "2007-2020",
         'category': ""
     })
     print(res)
