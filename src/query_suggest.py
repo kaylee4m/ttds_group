@@ -7,13 +7,13 @@ import time
 
 def init_ac_fac():
     cfg = settings['cfg']
-    # with open(cfg['UNIGRAM_FILE'], 'r')  as f:
+    # with open(cfg['UNIGRAM_FILE_FULL'], 'r')  as f:
     #     settings['ngrams'].update(json.load(f))
-    # with open(cfg['BIGRAM_FILE'], 'r')  as f:
+    # with open(cfg['BIGRAM_FILE_FULL'], 'r')  as f:
     #     settings['ngrams'].update(json.load(f))
     # with open(cfg['TRIGRAM_FILE'], 'r')  as f:
     #     settings['ngrams'].update(json.load(f))
-    # with open('res/all_ngrams.json', 'w') as f:
+    # with open('res/uni_bi_ngrams.json', 'w') as f:
     #     json.dump(settings['ngrams'],f)
     #
     # with open(cfg['BIGRAM_FILE_FULL'], 'r')  as f:
@@ -31,10 +31,10 @@ def init_ac_fac():
 
 def auto_complete(words):
     words = words.split()
-    keep = min(3, len(words))
+    keep = min(settings['cfg']['MAX_WORDS'], len(words))
     words = ' '.join(words[-keep:])
     results = settings['auto_complete'](words, settings['cfg']['SUGGESTION_NUMBER'])
-    results = [sugg[0] for sugg in results]
+    results = [' '.join(sugg) for sugg in results]
     return json.dumps(results)
 
 
@@ -43,13 +43,13 @@ if __name__ == '__main__':
     settings['cfg'] = get_config(args)
     ac = init_ac_fac()
     settings['auto_complete'] = ac
+    # start = time.time()
+    # print(auto_complete("thermo", ))
+    # print("Time %.4f" % (time.time() - start))
     start = time.time()
-    print(auto_complete("thermo", ))
-    print("Time %.4f" % (time.time() - start))
-    start = time.time()
-    print(auto_complete("graphics", ))
+    print(auto_complete("with in the sot", ))
     print("Time %.4f" % (time.time() - start))
     
     start = time.time()
-    print(auto_complete("chris poi", ))
+    print(auto_complete("chris", ))
     print("Time %.4f" % (time.time() - start))

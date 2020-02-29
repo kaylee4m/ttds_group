@@ -38,7 +38,7 @@ def deal_request():
         print(request.args)
     search_type = request.args.get('request_type', 'search')
     if search_type == 'search':
-        start, end = request.args.get('startYear', 1990), request.args.get('endYear', 2020)
+        start, end = request.args.get('start', 1990), request.args.get('end', 2020)
         res = settings['search_engine']({
             'keyword': request.args.get('key', ''),
             'pageNum': int(request.args.get('pageNum', 1)),
@@ -51,7 +51,6 @@ def deal_request():
         res = auto_complete(k)
     return json.dumps(res)
 
-# curl http://localhost:8081/?key=chris&request_type=autocomplete&pageNum=1&startYear=1990&endYear=2020
 if __name__ == "__main__":
     start_server()
     app.run(port = 8081)

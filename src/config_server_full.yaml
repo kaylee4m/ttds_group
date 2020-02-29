@@ -11,15 +11,15 @@ VALIDATION_SET: ""
 TEST_SET: ""
 
 # index
-INDEX_DIR: "se_index/"
+INDEX_DIR: "se_index_all/"
 INDEX_PREFIX: "sample_"
 CAT_ABBR_DICT: "res/cat_abbr_full.txt"
 INDEX_CACHE_SIZE: 50
 NUM_INDEX_FILES: 10 # per key group
-DOC_ID_2_DOC_NO: "res/DOC_ID_2_DOC_NO.json" # path to the mapping containing doc_id(str) to doc id (int)
-DOC_ID_2_DOC_LEN: "res/DOC_ID_2_DOC_LEN.json" # path to the mapping containing doc_id(str) to doc length(int)
-DOC_ID_2_DOC_NO_ALL: "res/DOC_ID_2_DOC_NO_ALL.json" # path to the mapping containing doc_id(str) to doc id (int)
-DOC_ID_2_DOC_LEN_ALL: "res/DOC_ID_2_DOC_LEN_ALL.json" # path to the mapping containing doc_id(str) to doc length(int)
+#DOC_ID_2_DOC_NO: "res/DOC_ID_2_DOC_NO.json" # path to the mapping containing doc_id(str) to doc id (int)
+#DOC_ID_2_DOC_LEN: "res/DOC_ID_2_DOC_LEN.json" # path to the mapping containing doc_id(str) to doc length(int)
+DOC_ID_2_DOC_NO: "res/DOC_ID_2_DOC_NO_ALL.json" # path to the mapping containing doc_id(str) to doc id (int)
+DOC_ID_2_DOC_LEN: "res/DOC_ID_2_DOC_LEN_ALL.json" # path to the mapping containing doc_id(str) to doc length(int)
 RECORD_POSITION: False
 
 # search

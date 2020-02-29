@@ -5,7 +5,8 @@ settings = {
     'doc_no_2_doc_id': {},
     'doc_id2length': {},
     'cat_abbr_to_full': {},
-    'unigram':{},
+    'unigram': {},
+    'ngrams': {},
     "search_engine": None,
     "auto_complete": None,
 }

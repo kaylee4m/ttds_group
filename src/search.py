@@ -34,6 +34,10 @@ class Search:
         Returns:
             result -- a generator of result list
         """
+        
+        if self.cfg['DEBUG_PRINT']:
+            print("Query:", q)
+            print("Cache:", list(self.searched_results.keys()))
         key = q['keyword'] + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
             # TODO see if prepro is used correctly
@@ -77,7 +81,7 @@ class Search:
         doc_list = self.searched_results[key][q['pageNum']]
         if self.cfg['RUN_SERVER']:
             results = get_doc(doc_list)
-            results =  {k: results[k] for k in doc_list}
+            results = {k: results[k] for k in doc_list}
         else:
             results = str(self.searched_results[key][q['pageNum']])
         return_dict = {"docs": results, "results": sum([len(d) for d in self.searched_results[key]])}
@@ -157,9 +161,9 @@ if __name__ == "__main__":
     settings['cfg'] = get_config(args)
     s = Search(settings['cfg'])
     res = s.search({
-        'keyword': 'deeper',
+        'keyword': 'A Practical Guide for the Effective Evaluation',
         'pageNum': 1,
-        'range': "1990-2020",
-        'category': "astro-ph"
+        'range': "2008-2020",
+        'category': ""
     })
     print(res)
