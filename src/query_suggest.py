@@ -16,8 +16,13 @@ def init_ac_fac():
     # with open('res/uni_bi_ngrams.json', 'w') as f:
     #     json.dump(settings['ngrams'],f)
     #
-    # with open(cfg['BIGRAM_FILE_FULL'], 'r')  as f:
-    #     settings['unigram'].update(json.load(f))
+    with open(cfg[cfg['AC_DIC']], 'r')  as f:
+        settings['unigram'].update(json.load(f))
+    settings['unigram']['walid magdy'] = [{}, "", 10000]
+    settings['unigram']['walid'] = [{}, "", 10000]
+    settings['unigram']['magdy'] = [{}, "", 10000]
+    with open(cfg[cfg['AC_DIC']], 'w')  as f:
+        json.dump(settings['unigram'], f)
     content_files = {
         'words': {
             'filepath': cfg[cfg['AC_DIC']],

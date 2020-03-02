@@ -12,7 +12,7 @@ TEST_SET: ""
 
 # index
 INDEX_DIR: "se_index_all/"
-INDEX_PREFIX: "sample_"
+INDEX_PREFIX: "sample"
 CAT_ABBR_DICT: "res/cat_abbr_full.txt"
 INDEX_CACHE_SIZE: 50
 NUM_INDEX_FILES: 10 # per key group

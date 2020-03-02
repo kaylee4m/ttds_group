@@ -38,11 +38,11 @@ class Search:
         if self.cfg['DEBUG_PRINT']:
             print("Query:", q)
             print("Cache:", list(self.searched_results.keys()))
-        key = q['keyword'] + str(q['range']) + str(q['category'])
+        words = preprocessing(
+            self.stemmer, q['keyword'], self.stopwords)
+        key = ' '.join(words) + str(q['range']) + str(q['category'])
         if key not in self.searched_results:
             # TODO see if prepro is used correctly
-            words = preprocessing(
-                self.stemmer, q['keyword'], self.stopwords)
             ori_pls = [get_posting_list(w) for w in words]
             total_docs = get_doc_numbers()
             df = [p.get_doc_freq() for p in ori_pls]
@@ -160,11 +160,11 @@ if __name__ == "__main__":
     args = args_build_index()
     settings['cfg'] = get_config(args)
     s = Search(settings['cfg'])
-    kwd='A Practical Guide for the Effective Evaluation'
+    kwd = 'A Practical Guide for the Effective Evaluation'
     res = s.search({
-        'keyword': 'hot pot rocks',
+        'keyword': kwd,
         'pageNum': 1,
-        'range': "2007-2020",
+        'range': "1990-2020",
         'category': ""
     })
     print(res)
